@@ -11,16 +11,15 @@
     <div class="container">
         <div class="schedule">
             <div class="schedule-header">
-                <h2>日程安排</h2>
-                <div class="view-selector">
-                    <button id="dayView">日</button>
-                    <button id="weekView">周</button>
-                    <button id="monthView">月</button>
-                </div>
                 <div class="date-navigator">
                     <button id="prevDate">&lt;</button>
                     <span id="currentDate"></span>
                     <button id="nextDate">&gt;</button>
+                </div>
+                <div class="view-selector">
+                    <button id="dayView">日</button>
+                    <button id="weekView">周</button>
+                    <button id="monthView">月</button>
                 </div>
             </div>
             <div id="scheduleList" class="schedule-list"></div>
@@ -29,7 +28,7 @@
             <h2>添加新任务</h2>
             <div id="chatBox"></div>
             <input type="text" id="userInput" placeholder="输入新任务，例如：明天下午2点到4点开会">
-            <button id="sendButton">发送</button>
+            <button id="sendButton">添加</button>
         </div>
     </div>
     <script src="script.js"></script>

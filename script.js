@@ -135,22 +135,41 @@ function initApp() {
     function updateSchedule(taskInfo) {
         const taskElement = document.createElement('div');
         taskElement.className = 'task';
-        taskElement.style.position = 'relative';
         
         const startTime = new Date(taskInfo.startTime);
         const endTime = new Date(taskInfo.endTime);
-        const duration = (endTime - startTime) / (1000 * 60); // 持续时间（分钟）
         
-        const top = (startTime.getHours() * 60 + startTime.getMinutes()) / 1440 * 100; // 24小时制下的百分比位置
-        const height = duration / 1440 * 100; // 持续时间的百分比高度
-
-        taskElement.style.top = `${top}%`;
-        taskElement.style.height = `${height}%`;
         taskElement.innerHTML = `
-            <p><strong>${taskInfo.startTime} - ${taskInfo.endTime}</strong></p>
+            <p><strong>${formatTime(startTime)} - ${formatTime(endTime)}</strong></p>
             <p>${taskInfo.task}</p>
         `;
-        scheduleList.appendChild(taskElement);
+        
+        // 根据当前视图将任务添加到正确的位置
+        switch (currentView) {
+            case 'day':
+                scheduleList.appendChild(taskElement);
+                break;
+            case 'week':
+                const dayColumn = scheduleList.children[startTime.getDay()];
+                if (dayColumn) {
+                    dayColumn.appendChild(taskElement);
+                }
+                break;
+            case 'month':
+                const dayElement = Array.from(scheduleList.children).find(el => 
+                    el.classList.contains('day') && 
+                    !el.classList.contains('other-month') && 
+                    el.querySelector('.day-header').textContent === startTime.getDate().toString()
+                );
+                if (dayElement) {
+                    dayElement.appendChild(taskElement);
+                }
+                break;
+        }
+    }
+
+    function formatTime(date) {
+        return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     }
 
     function updateChat(message) {
@@ -162,6 +181,7 @@ function initApp() {
 
     function changeView(view) {
         currentView = view;
+        setActiveView(view);
         updateView();
     }
 
@@ -235,6 +255,8 @@ function initApp() {
         const startDate = new Date(firstDay);
         startDate.setDate(startDate.getDate() - startDate.getDay());
 
+        const today = new Date();
+
         for (let i = 0; i < 42; i++) {
             const dayDiv = document.createElement('div');
             dayDiv.className = 'day';
@@ -243,6 +265,14 @@ function initApp() {
             
             if (dayDate.getMonth() !== currentDate.getMonth()) {
                 dayDiv.classList.add('other-month');
+            }
+            
+            if (dayDate.toDateString() === today.toDateString()) {
+                dayDiv.classList.add('today');
+            }
+            
+            if (dayDate.toDateString() === currentDate.toDateString()) {
+                dayDiv.classList.add('current-day');
             }
             
             dayDiv.innerHTML = `
@@ -272,7 +302,15 @@ function initApp() {
         currentDateSpan.textContent = dateString;
     }
 
+    // 添加当前视图的激活状态
+    function setActiveView(view) {
+        dayViewBtn.classList.toggle('active', view === 'day');
+        weekViewBtn.classList.toggle('active', view === 'week');
+        monthViewBtn.classList.toggle('active', view === 'month');
+    }
+
     // 初始化视图
+    setActiveView('day');
     updateView();
 }
 
