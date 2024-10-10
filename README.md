@@ -1,27 +1,47 @@
-# Schedule Management Web App
+# 日程管理网页应用
 
-This web application allows users to manage their schedules through a simple chat-like interface and a visual calendar.
+这个网页应用允许用户通过简单的聊天界面和可视化日历来管理他们的日程安排。
 
-## Features
+## 功能特点
 
-- Interactive calendar with day, week, and month views
-- Two-column layout: calendar display and chat input
-- Add tasks using natural language input or by clicking on the calendar
-- Basic parsing of time and task information
-- Display of added tasks in both the calendar and chat interface
-- Ability to delete tasks by clicking on them in the calendar
+- 交互式日历，支持日、周、月视图
+- 两栏布局：日历显示和聊天输入
+- 通过自然语言输入或点击日历添加任务
+- 基本的时间和任务信息解析
+- 在日历和聊天界面中显示添加的任务
+- 通过点击日历中的任务可以删除任务
 
-## Recent Updates
+## 最近更新
 
-- Integrated FullCalendar.js for a more robust calendar interface
-- Implemented day, week, and month view switching
-- Added ability to add events by clicking on the calendar
-- Integrated chat-based task addition with calendar display
-- Adjusted layout to give more space to the calendar view
-- Updated styling for better visual appeal and usability
+- 集成了FullCalendar.js以提供更强大的日历界面
+- 实现了日、周、月视图切换
+- 添加了通过点击日历添加事件的功能
+- 将基于聊天的任务添加与日历显示集成
+- 调整了布局，为日历视图提供更多空间
+- 更新了样式，提高了视觉吸引力和可用性
+- 调整了日历样式，更接近苹果日历的设计风格
 
-## Next Steps
+## 下一步计划
 
-- Improve natural language processing for more flexible task input
-- Implement conflict detection for overlapping tasks
-- Enhance the chat interface with AI-powered suggestions and reminders
+- 改进自然语言处理，实现更灵活的任务输入
+- 实现重叠任务的冲突检测
+- 增强聊天界面，添加AI驱动的建议和提醒功能
+- 进一步优化用户界面，提高用户体验
+- 添加任务编辑和详情查看功能
+- 实现数据持久化，支持用户账户系统
+
+## 如何使用
+
+1. 打开index.html文件在浏览器中查看应用
+2. 使用日历界面直接点击添加、编辑或删除事件
+3. 在聊天框中输入自然语言描述（如"明天下午3点开会"）来添加任务
+4. 查看日历中自动更新的任务安排
+
+## 技术栈
+
+- HTML5
+- CSS3
+- JavaScript
+- FullCalendar.js库
+
+欢迎贡献代码或提出建议，以帮助改进这个日程管理应用！
