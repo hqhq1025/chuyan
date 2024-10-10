@@ -43,66 +43,122 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function parseInput(input) {
-        const dateRegex = /(\d{4}年)?(\d{1,2}月)?(\d{1,2}日)?(\b今天|\b明天|\b后天|\b下周|\b下个月)?/;
-        const timeRegex = /(\d{1,2}[:：]\d{2}|\d{1,2}\s?(?:上午|下午|晚上|am|pm))/i;
+        const dateTimeRegex = /(今天|明天|后天|下周[一二三四五六日]|本周[一二三四五六日]|\d{4}年\d{1,2}月\d{1,2}日|\d{1,2}月\d{1,2}日|\d{1,2}日)?\s*(上午|下午|晚上)?\s*(\d{1,2}[点:：]\d{0,2})?\s*(.*)/;
         const durationRegex = /(?:时长|持续)?\s?(\d+)\s?(小时|分钟)/;
 
-        const dateMatch = input.match(dateRegex);
-        const timeMatch = input.match(timeRegex);
+        const match = input.match(dateTimeRegex);
+        if (!match) return null;
+
+        const [, dateStr, periodOfDay, timeStr, title] = match;
         const durationMatch = input.match(durationRegex);
 
-        if (dateMatch || timeMatch) {
-            let date = parseDate(dateMatch ? dateMatch[0] : '今天');
-            let time = parseTime(timeMatch ? timeMatch[0] : '9:00');
-            let duration = durationMatch ? parseDuration(durationMatch[1], durationMatch[2]) : 60; // 默认1小时
-            let title = input.replace(dateRegex, '').replace(timeRegex, '').replace(durationRegex, '').trim();
+        let date = parseDate(dateStr);
+        let time = parseTime(timeStr, periodOfDay);
+        let duration = durationMatch ? parseDuration(durationMatch[1], durationMatch[2]) : 60; // 默认1小时
 
-            return {
-                title: title,
-                start: new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes()),
-                end: new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes() + duration),
-                allDay: false
-            };
+        if (!date) {
+            if (!confirm('未指定日期，是否使用今天作为默认日期？')) {
+                return null;
+            }
+            date = new Date();
         }
-        return null;
+
+        if (!time) {
+            const defaultTime = prompt('未指��时间，请输入时间（如 14:00）：', '09:00');
+            if (defaultTime) {
+                time = parseTime(defaultTime);
+            } else {
+                return null;
+            }
+        }
+
+        const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes());
+        const end = new Date(start.getTime() + duration * 60000);
+
+        return {
+            title: title.trim(),
+            start: start,
+            end: end,
+            allDay: false
+        };
     }
 
     function parseDate(dateStr) {
+        if (!dateStr) return null;
+
         const now = new Date();
-        if (dateStr.includes('明天')) {
-            now.setDate(now.getDate() + 1);
-        } else if (dateStr.includes('后天')) {
-            now.setDate(now.getDate() + 2);
-        } else if (dateStr.includes('下周')) {
-            now.setDate(now.getDate() + 7);
-        } else if (dateStr.includes('下个月')) {
-            now.setMonth(now.getMonth() + 1);
-        } else if (dateStr.includes('年') || dateStr.includes('月') || dateStr.includes('日')) {
-            const parts = dateStr.match(/(\d+)/g);
-            if (parts && parts.length >= 3) {
-                return new Date(parts[0], parts[1] - 1, parts[2]);
+        const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+
+        if (dateStr === '今天') return now;
+        if (dateStr === '明天') return new Date(now.setDate(now.getDate() + 1));
+        if (dateStr === '后天') return new Date(now.setDate(now.getDate() + 2));
+
+        if (dateStr.includes('周')) {
+            const dayIndex = weekdays.indexOf(dateStr.charAt(dateStr.length - 1));
+            const isNextWeek = dateStr.includes('下周');
+            const targetDate = new Date(now);
+            const currentDay = now.getDay();
+            let daysToAdd;
+
+            if (isNextWeek) {
+                daysToAdd = (dayIndex + 7 - currentDay) % 7;
+                if (daysToAdd === 0) daysToAdd = 7; // 如果计算结果为0，说明是下周的同一天
+            } else { // 本周
+                daysToAdd = (dayIndex - currentDay + 7) % 7;
             }
+
+            targetDate.setDate(now.getDate() + daysToAdd);
+            return targetDate;
         }
-        return now;
+
+        const dateMatch = dateStr.match(/(\d{4}年)?(\d{1,2})月(\d{1,2})日/);
+        if (dateMatch) {
+            const [, yearStr, month, day] = dateMatch;
+            const year = yearStr ? parseInt(yearStr) : now.getFullYear();
+            return new Date(year, parseInt(month) - 1, parseInt(day));
+        }
+
+        return null;
     }
 
-    function parseTime(timeStr) {
-        let [hours, minutes] = timeStr.split(/[:：]/);
-        if (timeStr.toLowerCase().includes('pm') || timeStr.includes('下午') || timeStr.includes('晚上')) {
-            hours = parseInt(hours) + 12;
+    function parseTime(timeStr, periodOfDay) {
+        if (!timeStr) return null;
+
+        let [hours, minutes] = timeStr.split(/[点:：]/).map(num => parseInt(num));
+        minutes = minutes || 0;
+
+        if (periodOfDay === '下午' || periodOfDay === '晚上') {
+            hours = hours < 12 ? hours + 12 : hours;
+        } else if (periodOfDay === '上午' && hours === 12) {
+            hours = 0;
         }
-        return new Date(0, 0, 0, hours, minutes || 0);
+
+        return new Date(0, 0, 0, hours, minutes);
     }
 
     function parseDuration(amount, unit) {
-        return unit === '小时' ? amount * 60 : parseInt(amount);
+        amount = parseInt(amount);
+        return unit === '小时' ? amount * 60 : amount;
     }
 
     function showConfirmDialog(taskInfo) {
         const confirmMessage = `是否添加以下任务到日历？\n标题: ${taskInfo.title}\n开始时间: ${taskInfo.start.toLocaleString()}\n结束时间: ${taskInfo.end.toLocaleString()}`;
         if (confirm(confirmMessage)) {
+            // 检查时间冲突
+            const conflictingEvents = calendar.getEvents().filter(event => 
+                (event.start < taskInfo.end && event.end > taskInfo.start)
+            );
+            
+            if (conflictingEvents.length > 0) {
+                const conflictMessage = `警告：该时间段与以下事件有冲突：\n${conflictingEvents.map(e => e.title).join('\n')}\n是否仍要添加？`;
+                if (!confirm(conflictMessage)) {
+                    updateChat('已取消添加任务');
+                    return;
+                }
+            }
+            
             calendar.addEvent(taskInfo);
-            updateChat(`已添加任务：${taskInfo.title}`);
+            updateChat(`已添加任务：${taskInfo.title}，时间：${taskInfo.start.toLocaleString()} - ${taskInfo.end.toLocaleString()}`);
         } else {
             updateChat('已取消添加任务');
         }
