@@ -67,6 +67,7 @@ function initApp() {
 
             ws.onopen = () => {
                 console.log('WebSocket connected');
+                const currentDate = new Date();
                 const data = {
                     header: {
                         app_id: APPID
@@ -81,7 +82,14 @@ function initApp() {
                     payload: {
                         message: {
                             text: [
-                                { role: "system", content: "你是一个日程助手。请解析用户输入的日程信息，包括任务内容、开始时间和结束时间。请以JSON格式回复，包含task（任务内容）、startTime（开始时间）和endTime（结束时间）字段。" },
+                                { role: "system", content: `你是一个智能日程助手。请解析用户输入的日程信息，包括任务内容、开始时间和结束时间。请以JSON格式回复，包含task（任务内容）、startTime（开始时间）和endTime（结束时间）字段。
+                                
+                                当前日期是 ${currentDate.toISOString().split('T')[0]}。请注意以下几点：
+                                1. 理解并正确解析相对时间词，如"今天"、"明天"、"后天"、"下周"等。
+                                2. 如果用户没有明确指定日期，默认为今天或最近的未来日期。
+                                3. 如果用户没有明确指定结束时间，默认持续1小时。
+                                4. 日期和时间请使用 ISO 8601 格式（YYYY-MM-DDTHH:mm:ss）。
+                                5. 尽可能理解用户的意图，即使表达不够精确也要尝试解析。` },
                                 { role: "user", content: text }
                             ]
                         }
