@@ -57,10 +57,12 @@ body {
     background-color: #0071e3;
     border-color: #0071e3;
     color: #ffffff;
+    border-radius: 4px;
+    padding: 2px 4px;
 }
 
 .input-samples {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .input-samples button {
@@ -71,15 +73,16 @@ body {
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 12px;
 }
 
 #chatBox {
     flex-grow: 1;
     overflow-y: auto;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     background-color: #ffffff;
     border-radius: 10px;
-    padding: 10px;
+    padding: 15px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -89,6 +92,7 @@ body {
     margin-right: 10px;
     border: 1px solid #d2d2d7;
     border-radius: 5px;
+    font-size: 14px;
 }
 
 #sendButton {
@@ -99,10 +103,12 @@ body {
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 14px;
 }
 
 h2 {
     margin-top: 0;
+    margin-bottom: 15px;
     font-weight: 500;
     color: #1d1d1f;
 }

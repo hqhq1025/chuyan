@@ -13,9 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addEventPrompt(info.start, info.end, info.allDay);
         },
         eventClick: function(info) {
-            if (confirm('是否要删除这个事件?')) {
-                info.event.remove();
-            }
+            showEventDetails(info.event);
         }
     });
     calendar.render();
@@ -45,17 +43,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function parseInput(input) {
-        const dateRegex = /(\d{4}-\d{2}-\d{2}|\b(?:今天|明天|后天)\b)/;
-        const timeRegex = /(\d{1,2}[:]\d{2}|\d{1,2}\s?(?:上午|下午|晚上|am|pm))/i;
-        const durationRegex = /(\d+)\s?(小时|分钟)/;
+        const dateRegex = /(\d{4}年)?(\d{1,2}月)?(\d{1,2}日)?(\b今天|\b明天|\b后天|\b下周|\b下个月)?/;
+        const timeRegex = /(\d{1,2}[:：]\d{2}|\d{1,2}\s?(?:上午|下午|晚上|am|pm))/i;
+        const durationRegex = /(?:时长|持续)?\s?(\d+)\s?(小时|分钟)/;
 
         const dateMatch = input.match(dateRegex);
         const timeMatch = input.match(timeRegex);
         const durationMatch = input.match(durationRegex);
 
-        if (dateMatch && timeMatch) {
-            let date = parseDate(dateMatch[1]);
-            let time = parseTime(timeMatch[1]);
+        if (dateMatch || timeMatch) {
+            let date = parseDate(dateMatch ? dateMatch[0] : '今天');
+            let time = parseTime(timeMatch ? timeMatch[0] : '9:00');
             let duration = durationMatch ? parseDuration(durationMatch[1], durationMatch[2]) : 60; // 默认1小时
             let title = input.replace(dateRegex, '').replace(timeRegex, '').replace(durationRegex, '').trim();
 
@@ -70,25 +68,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function parseDate(dateStr) {
-        if (dateStr === '今天') return new Date();
-        if (dateStr === '明天') {
-            let tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            return tomorrow;
+        const now = new Date();
+        if (dateStr.includes('明天')) {
+            now.setDate(now.getDate() + 1);
+        } else if (dateStr.includes('后天')) {
+            now.setDate(now.getDate() + 2);
+        } else if (dateStr.includes('下周')) {
+            now.setDate(now.getDate() + 7);
+        } else if (dateStr.includes('下个月')) {
+            now.setMonth(now.getMonth() + 1);
+        } else if (dateStr.includes('年') || dateStr.includes('月') || dateStr.includes('日')) {
+            const parts = dateStr.match(/(\d+)/g);
+            if (parts && parts.length >= 3) {
+                return new Date(parts[0], parts[1] - 1, parts[2]);
+            }
         }
-        if (dateStr === '后天') {
-            let dayAfterTomorrow = new Date();
-            dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-            return dayAfterTomorrow;
-        }
-        return new Date(dateStr);
+        return now;
     }
 
     function parseTime(timeStr) {
-        let [hours, minutes] = timeStr.split(':');
-        if (timeStr.toLowerCase().includes('pm') && hours < 12) {
-            hours = parseInt(hours) + 12;
-        } else if (timeStr.includes('下午') || timeStr.includes('晚上')) {
+        let [hours, minutes] = timeStr.split(/[:：]/);
+        if (timeStr.toLowerCase().includes('pm') || timeStr.includes('下午') || timeStr.includes('晚上')) {
             hours = parseInt(hours) + 12;
         }
         return new Date(0, 0, 0, hours, minutes || 0);
@@ -126,6 +126,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         calendar.unselect();
+    }
+
+    function showEventDetails(event) {
+        const details = `
+            标题: ${event.title}
+            开始时间: ${event.start.toLocaleString()}
+            结束时间: ${event.end ? event.end.toLocaleString() : '未指定'}
+        `;
+        alert(details);
     }
 
     // 添加输入样式模板功能
