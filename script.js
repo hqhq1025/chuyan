@@ -99,13 +99,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showConfirmDialog(taskInfo) {
-        const confirmMessage = `是否添加以下任务到日历？\n标题: ${taskInfo.title}\n开始时间: ${taskInfo.start.toLocaleString()}\n结束时间: ${taskInfo.end.toLocaleString()}`;
-        if (confirm(confirmMessage)) {
+        const modal = document.getElementById('customModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const confirmBtn = document.getElementById('modalConfirm');
+        const cancelBtn = document.getElementById('modalCancel');
+
+        modalTitle.textContent = '确认添加任务';
+        modalBody.innerHTML = `
+            <p><strong>标题:</strong> ${taskInfo.title}</p>
+            <p><strong>开始时间:</strong> ${taskInfo.start.toLocaleString()}</p>
+            <p><strong>结束时间:</strong> ${taskInfo.end.toLocaleString()}</p>
+        `;
+
+        modal.style.display = 'block';
+
+        confirmBtn.onclick = function() {
             calendar.addEvent(taskInfo);
             updateChat(`已添加任务：${taskInfo.title}`);
-        } else {
+            modal.style.display = 'none';
+        };
+
+        cancelBtn.onclick = function() {
             updateChat('已取消添加任务');
-        }
+            modal.style.display = 'none';
+        };
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        };
     }
 
     function updateChat(message) {
@@ -116,25 +140,78 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addEventPrompt(start, end, allDay) {
-        const title = prompt('请输入新事件的标题:');
-        if (title) {
-            calendar.addEvent({
-                title: title,
-                start: start,
-                end: end,
-                allDay: allDay
-            });
-        }
-        calendar.unselect();
+        const modal = document.getElementById('customModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const confirmBtn = document.getElementById('modalConfirm');
+        const cancelBtn = document.getElementById('modalCancel');
+
+        modalTitle.textContent = '添加新事件';
+        modalBody.innerHTML = `
+            <input type="text" id="newEventTitle" placeholder="请输入新事件的标题">
+        `;
+
+        modal.style.display = 'block';
+
+        confirmBtn.onclick = function() {
+            const title = document.getElementById('newEventTitle').value;
+            if (title) {
+                calendar.addEvent({
+                    title: title,
+                    start: start,
+                    end: end,
+                    allDay: allDay
+                });
+            }
+            modal.style.display = 'none';
+            calendar.unselect();
+        };
+
+        cancelBtn.onclick = function() {
+            modal.style.display = 'none';
+            calendar.unselect();
+        };
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+                calendar.unselect();
+            }
+        };
     }
 
     function showEventDetails(event) {
-        const details = `
-            标题: ${event.title}
-            开始时间: ${event.start.toLocaleString()}
-            结束时间: ${event.end ? event.end.toLocaleString() : '未指定'}
+        const modal = document.getElementById('customModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const confirmBtn = document.getElementById('modalConfirm');
+        const cancelBtn = document.getElementById('modalCancel');
+
+        modalTitle.textContent = '事件详情';
+        modalBody.innerHTML = `
+            <p><strong>标题:</strong> ${event.title}</p>
+            <p><strong>开始时间:</strong> ${event.start.toLocaleString()}</p>
+            <p><strong>结束时间:</strong> ${event.end ? event.end.toLocaleString() : '未指定'}</p>
         `;
-        alert(details);
+
+        modal.style.display = 'block';
+
+        confirmBtn.style.display = 'none';
+        cancelBtn.textContent = '关闭';
+
+        cancelBtn.onclick = function() {
+            modal.style.display = 'none';
+            confirmBtn.style.display = 'inline-block';
+            cancelBtn.textContent = '取消';
+        };
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+                confirmBtn.style.display = 'inline-block';
+                cancelBtn.textContent = '取消';
+            }
+        };
     }
 
     // 添加输入样式模板功能

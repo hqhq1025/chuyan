@@ -26,6 +26,17 @@
             <input type="text" id="userInput" placeholder="输入新任务，例如：明天下午3点开会，时长2小时">
             <button id="sendButton">发送</button>
         </div>
+        <!-- 在<body>标签内,</div class="container">之后添加 -->
+        <div id="customModal" class="modal">
+            <div class="modal-content">
+                <h3 id="modalTitle"></h3>
+                <div id="modalBody"></div>
+                <div class="modal-buttons">
+                    <button id="modalConfirm" class="btn-confirm">确认</button>
+                    <button id="modalCancel" class="btn-cancel">取消</button>
+                </div>
+            </div>
+        </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.js"></script>
     <script src="script.js"></script>
