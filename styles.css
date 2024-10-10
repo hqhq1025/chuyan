@@ -59,6 +59,20 @@ body {
     color: #ffffff;
 }
 
+.input-samples {
+    margin-bottom: 10px;
+}
+
+.input-samples button {
+    margin-right: 5px;
+    margin-bottom: 5px;
+    padding: 5px 10px;
+    background-color: #e0e0e0;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
 #chatBox {
     flex-grow: 1;
     overflow-y: auto;
