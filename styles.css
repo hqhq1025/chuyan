@@ -1,0 +1,38 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+.schedule, .chat {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.schedule {
+    background-color: #f0f0f0;
+}
+
+.chat {
+    background-color: #e0e0e0;
+}
+
+#userInput {
+    width: 80%;
+    padding: 10px;
+    margin-right: 10px;
+}
+
+#sendButton {
+    padding: 10px 20px;
+}
+
+#scheduleList, #chatBox {
+    margin-top: 20px;
+}
