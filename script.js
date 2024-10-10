@@ -32,17 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function processInput() {
         const input = userInput.value.trim();
         if (input) {
-            const taskInfo = parseInput(input);
-            if (taskInfo) {
-                showConfirmDialog(taskInfo);
-            } else {
-                updateChat('无法识别任务信息，请使用更明确的格式，例如："明天下午3点开会，时长2小时"');
-            }
+            parseInput(input, (taskInfo) => {
+                if (taskInfo) {
+                    showConfirmDialog(taskInfo);
+                } else {
+                    updateChat('无法识别任务信息，请使用更明确的格式，例如："明天下午3点开会，时长2小时"');
+                }
+            });
             userInput.value = '';
         }
     }
 
-    function parseInput(input) {
+    function parseInput(input, callback) {
         const dateTimeRegex = /(今天|明天|后天|下周[一二三四五六日]|本周[一二三四五六日]|\d{4}年\d{1,2}月\d{1,2}日|\d{1,2}月\d{1,2}日|\d{1,2}日)?\s*(上午|下午|晚上)?\s*(\d{1,2}[点:：]\d{0,2})?\s*(.*)/;
         const durationRegex = /(?:时长|持续)?\s?(\d+)\s?(小时|分钟)/;
 
@@ -57,19 +58,43 @@ document.addEventListener('DOMContentLoaded', () => {
         let duration = durationMatch ? parseDuration(durationMatch[1], durationMatch[2]) : 60; // 默认1小时
 
         if (!date) {
-            if (!confirm('未指定日期，是否使用今天作为默认日期？')) {
-                return null;
-            }
-            date = new Date();
+            showCustomPrompt('未指定日期', '是否使用今天作为默认日期？', (result) => {
+                if (result) {
+                    date = new Date();
+                    continueProcessing();
+                } else {
+                    updateChat('已取消添加任务');
+                }
+            });
+            return;
         }
 
         if (!time) {
-            const defaultTime = prompt('未指时间，请输入时间（如 14:00）：', '09:00');
-            if (defaultTime) {
-                time = parseTime(defaultTime);
-            } else {
-                return null;
-            }
+            showCustomPrompt('未指定时间', '请输入时间（如 14:00）：', (result) => {
+                if (result) {
+                    time = parseTime(result);
+                    if (time) {
+                        continueProcessing();
+                    } else {
+                        updateChat('无效的时间格式，已取消添加任务');
+                    }
+                } else {
+                    updateChat('已取消添加任务');
+                }
+            }, '09:00');
+            return;
+        }
+
+        function continueProcessing() {
+            const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes());
+            const end = new Date(start.getTime() + duration * 60000);
+
+            showConfirmDialog({
+                title: title.trim(),
+                start: start,
+                end: end,
+                allDay: false
+            });
         }
 
         const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes());
@@ -89,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
 
-        if (dateStr === '今天') return now;
+        if (dateStr === '今��') return now;
         if (dateStr === '明天') return new Date(now.setDate(now.getDate() + 1));
         if (dateStr === '后天') return new Date(now.setDate(now.getDate() + 2));
 
@@ -275,5 +300,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // 添加输入样式模板功能
     window.setInput = function(sample) {
         userInput.value = sample;
+    }
+
+    // ��文件末尾添加以下函数
+    function showCustomPrompt(title, message, callback, defaultValue = '') {
+        const modal = document.getElementById('customModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const confirmBtn = document.getElementById('modalConfirm');
+        const cancelBtn = document.getElementById('modalCancel');
+
+        modalTitle.textContent = title;
+        modalBody.innerHTML = `
+            <p>${message}</p>
+            <input type="text" id="customPromptInput" value="${defaultValue}">
+        `;
+
+        modal.style.display = 'block';
+
+        confirmBtn.onclick = function() {
+            const input = document.getElementById('customPromptInput').value;
+            modal.style.display = 'none';
+            callback(input);
+        };
+
+        cancelBtn.onclick = function() {
+            modal.style.display = 'none';
+            callback(null);
+        };
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+                callback(null);
+            }
+        };
     }
 });
