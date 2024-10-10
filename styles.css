@@ -1,9 +1,15 @@
 body {
+<<<<<<< HEAD
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f5f5f7;
     color: #1d1d1f;
+=======
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+>>>>>>> d991d7ad70d7df0f3f0df540ed1271143e549023
 }
 
 .container {
@@ -11,6 +17,7 @@ body {
     height: 100vh;
 }
 
+<<<<<<< HEAD
 .schedule {
     flex: 3;
     padding: 20px;
@@ -177,4 +184,66 @@ h2 {
 
 .btn-cancel:hover {
     background-color: #d0d0d0;
+=======
+.schedule, .chat {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.schedule {
+    background-color: #f0f0f0;
+}
+
+.schedule-list {
+    position: relative;
+    height: 80vh;
+    border: 1px solid #ccc;
+    background-color: white;
+}
+
+.task {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background-color: #e6f3ff;
+    border-left: 4px solid #4a90e2;
+    padding: 5px;
+    box-sizing: border-box;
+    overflow: hidden;
+    font-size: 12px;
+}
+
+.chat {
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+}
+
+#chatBox {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+
+#userInput {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+#sendButton {
+    width: 100%;
+    padding: 5px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+#sendButton:hover {
+    background-color: #45a049;
+>>>>>>> d991d7ad70d7df0f3f0df540ed1271143e549023
 }
