@@ -44,29 +44,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function parseInput(input, callback) {
-        const dateTimeRegex = /(今天|明天|后天|下周[一二三四五六日]|本周[一二三四五六日]|\d{4}年\d{1,2}月\d{1,2}日|\d{1,2}月\d{1,2}日|\d{1,2}日)?\s*(上午|下午|晚上)?\s*(\d{1,2}[点:：]\d{0,2})?\s*(.*)/;
+        const dateTimeRegex = /(今天|明天|后天|下周[一二三四五六日]|本周[一二三四五六日]|\d{4}年\d{1,2}月\d{1,2}日|\d{1,2}月\d{1,2}日)?\s*(上午|下午|晚上)?\s*(\d{1,2}([点:：]\d{0,2})?)(.*)/;
         const durationRegex = /(?:时长|持续)?\s?(\d+)\s?(小时|分钟)/;
 
         const match = input.match(dateTimeRegex);
-        if (!match) return null;
+        if (!match) {
+            callback(null);
+            return;
+        }
 
-        const [, dateStr, periodOfDay, timeStr, title] = match;
+        const [, dateStr, periodOfDay, timeStr, , title] = match;
         const durationMatch = input.match(durationRegex);
 
         let date = parseDate(dateStr);
         let time = parseTime(timeStr, periodOfDay);
         let duration = durationMatch ? parseDuration(durationMatch[1], durationMatch[2]) : 60; // 默认1小时
 
-        if (!date) {
-            showCustomPrompt('未指定日期', '是否使用今天作为默认日期？', (result) => {
-                if (result) {
-                    date = new Date();
+        if (!date && !time) {
+            showCustomPrompt('未指定日期和时间', '是否使用当前时间？', (result) => {
+                if (result === 'yes') {
+                    const now = new Date();
+                    date = now;
+                    time = now;
                     continueProcessing();
                 } else {
-                    updateChat('已取消添加任务');
+                    callback(null);
                 }
             });
             return;
+        }
+
+        if (!date) {
+            date = new Date(); // 如果没有指定日期，使用今天
         }
 
         if (!time) {
@@ -76,36 +85,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (time) {
                         continueProcessing();
                     } else {
-                        updateChat('无效的时间格式，已取消添加任务');
+                        callback(null);
                     }
                 } else {
-                    updateChat('已取消添加任务');
+                    callback(null);
                 }
             }, '09:00');
             return;
         }
 
+        continueProcessing();
+
         function continueProcessing() {
             const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes());
             const end = new Date(start.getTime() + duration * 60000);
 
-            showConfirmDialog({
+            callback({
                 title: title.trim(),
                 start: start,
                 end: end,
                 allDay: false
             });
         }
-
-        const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes());
-        const end = new Date(start.getTime() + duration * 60000);
-
-        return {
-            title: title.trim(),
-            start: start,
-            end: end,
-            allDay: false
-        };
     }
 
     function parseDate(dateStr) {
@@ -114,36 +115,44 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
 
-        if (dateStr === '今��') return now;
-        if (dateStr === '明天') return new Date(now.setDate(now.getDate() + 1));
-        if (dateStr === '后天') return new Date(now.setDate(now.getDate() + 2));
+        if (dateStr === '今天') return now;
+        if (dateStr === '明天') {
+            const tomorrow = new Date(now);
+            tomorrow.setDate(now.getDate() + 1);
+            return tomorrow;
+        }
+        if (dateStr === '后天') {
+            const dayAfterTomorrow = new Date(now);
+            dayAfterTomorrow.setDate(now.getDate() + 2);
+            return dayAfterTomorrow;
+        }
 
-        if (dateStr.includes('周')) {
+        if (dateStr.includes('周') || dateStr.includes('星期')) {
             const dayIndex = weekdays.indexOf(dateStr.charAt(dateStr.length - 1));
-            const isNextWeek = dateStr.includes('下周');
+            const isNextWeek = dateStr.includes('下');
             const targetDate = new Date(now);
             const currentDay = now.getDay();
             let daysToAdd;
 
             if (isNextWeek) {
-                daysToAdd = (dayIndex + 7 - currentDay) % 7;
-                if (daysToAdd === 0) daysToAdd = 7; // 如果计算结果为0，说明是下周的同一天
+                daysToAdd = dayIndex + 7 - currentDay;
+                if (daysToAdd > 7) daysToAdd -= 7;
             } else { // 本周
-                daysToAdd = (dayIndex - currentDay + 7) % 7;
+                daysToAdd = (dayIndex + 7 - currentDay) % 7;
             }
 
             targetDate.setDate(now.getDate() + daysToAdd);
             return targetDate;
         }
 
-        const dateMatch = dateStr.match(/(\d{4}年)?(\d{1,2})月(\d{1,2})日/);
+        const dateMatch = dateStr.match(/(\d{4}年)?(\d{1,2})月(\d{1,2})日?/);
         if (dateMatch) {
             const [, yearStr, month, day] = dateMatch;
             const year = yearStr ? parseInt(yearStr) : now.getFullYear();
             return new Date(year, parseInt(month) - 1, parseInt(day));
         }
 
-        return null;
+        return null; // 如果无法解析，返回null
     }
 
     function parseTime(timeStr, periodOfDay) {
@@ -152,9 +161,19 @@ document.addEventListener('DOMContentLoaded', () => {
         let [hours, minutes] = timeStr.split(/[点:：]/).map(num => parseInt(num));
         minutes = minutes || 0;
 
-        if (periodOfDay === '下午' || periodOfDay === '晚上') {
-            hours = hours < 12 ? hours + 12 : hours;
-        } else if (periodOfDay === '上午' && hours === 12) {
+        // 扩展时间段识别
+        const morningPeriods = ['早上', '早晨', '上午', '凌晨'];
+        const afternoonPeriods = ['下午', '午后', '晚上', '傍晚', '夜晚'];
+
+        // 如果使用24小时制，则直接使用
+        if (hours >= 0 && hours <= 23) {
+            // 对于凌晨的特殊处理
+            if (hours >= 0 && hours <= 5 && !morningPeriods.includes(periodOfDay)) {
+                hours += 12;
+            }
+        } else if (afternoonPeriods.includes(periodOfDay) || (hours <= 12 && periodOfDay === '中午')) {
+            hours = hours % 12 + 12;
+        } else if ((morningPeriods.includes(periodOfDay) || !periodOfDay) && hours === 12) {
             hours = 0;
         }
 
@@ -302,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userInput.value = sample;
     }
 
-    // ��文件末尾添加以下函数
+    // 文件末尾添加以下函数
     function showCustomPrompt(title, message, callback, defaultValue = '') {
         const modal = document.getElementById('customModal');
         const modalTitle = document.getElementById('modalTitle');
