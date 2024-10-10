@@ -10,7 +10,19 @@
 <body>
     <div class="container">
         <div class="schedule">
-            <h2>日程安排</h2>
+            <div class="schedule-header">
+                <h2>日程安排</h2>
+                <div class="view-selector">
+                    <button id="dayView">日</button>
+                    <button id="weekView">周</button>
+                    <button id="monthView">月</button>
+                </div>
+                <div class="date-navigator">
+                    <button id="prevDate">&lt;</button>
+                    <span id="currentDate"></span>
+                    <button id="nextDate">&gt;</button>
+                </div>
+            </div>
             <div id="scheduleList" class="schedule-list"></div>
         </div>
         <div class="chat">

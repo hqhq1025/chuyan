@@ -8,12 +8,28 @@ function initApp() {
     const APISecret = 'YmMxMmYzMmQ3NzYzNjc4ZDJiNjA3ZTc1';
     const APIKey = 'ae73f23b9eaa1c164fa2b52d923c5fc1';
 
+    const dayViewBtn = document.getElementById('dayView');
+    const weekViewBtn = document.getElementById('weekView');
+    const monthViewBtn = document.getElementById('monthView');
+    const prevDateBtn = document.getElementById('prevDate');
+    const nextDateBtn = document.getElementById('nextDate');
+    const currentDateSpan = document.getElementById('currentDate');
+
+    let currentView = 'day';
+    let currentDate = new Date();
+
     sendButton.addEventListener('click', handleUserInput);
     userInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             handleUserInput();
         }
     });
+
+    dayViewBtn.addEventListener('click', () => changeView('day'));
+    weekViewBtn.addEventListener('click', () => changeView('week'));
+    monthViewBtn.addEventListener('click', () => changeView('month'));
+    prevDateBtn.addEventListener('click', () => navigateDate(-1));
+    nextDateBtn.addEventListener('click', () => navigateDate(1));
 
     async function handleUserInput() {
         const userText = userInput.value.trim();
@@ -143,6 +159,121 @@ function initApp() {
         chatBox.appendChild(chatMessage);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
+
+    function changeView(view) {
+        currentView = view;
+        updateView();
+    }
+
+    function navigateDate(direction) {
+        switch (currentView) {
+            case 'day':
+                currentDate.setDate(currentDate.getDate() + direction);
+                break;
+            case 'week':
+                currentDate.setDate(currentDate.getDate() + direction * 7);
+                break;
+            case 'month':
+                currentDate.setMonth(currentDate.getMonth() + direction);
+                break;
+        }
+        updateView();
+    }
+
+    function updateView() {
+        scheduleList.innerHTML = '';
+        switch (currentView) {
+            case 'day':
+                renderDayView();
+                break;
+            case 'week':
+                renderWeekView();
+                break;
+            case 'month':
+                renderMonthView();
+                break;
+        }
+        updateCurrentDateDisplay();
+    }
+
+    function renderDayView() {
+        scheduleList.className = 'schedule-list day-view';
+        for (let i = 0; i < 24; i++) {
+            const hourDiv = document.createElement('div');
+            hourDiv.className = 'hour';
+            hourDiv.innerHTML = `<span class="hour-label">${i}:00</span>`;
+            scheduleList.appendChild(hourDiv);
+        }
+    }
+
+    function renderWeekView() {
+        scheduleList.className = 'schedule-list week-view';
+        const weekStart = new Date(currentDate);
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        
+        for (let i = 0; i < 7; i++) {
+            const dayColumn = document.createElement('div');
+            dayColumn.className = 'day-column';
+            const dayDate = new Date(weekStart);
+            dayDate.setDate(dayDate.getDate() + i);
+            dayColumn.innerHTML = `
+                <div class="day-header">${dayDate.toLocaleDateString('zh-CN', { weekday: 'short', month: 'numeric', day: 'numeric' })}</div>
+            `;
+            for (let j = 0; j < 24; j++) {
+                const hourDiv = document.createElement('div');
+                hourDiv.className = 'hour';
+                dayColumn.appendChild(hourDiv);
+            }
+            scheduleList.appendChild(dayColumn);
+        }
+    }
+
+    function renderMonthView() {
+        scheduleList.className = 'schedule-list month-view';
+        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        const startDate = new Date(firstDay);
+        startDate.setDate(startDate.getDate() - startDate.getDay());
+
+        for (let i = 0; i < 42; i++) {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day';
+            const dayDate = new Date(startDate);
+            dayDate.setDate(dayDate.getDate() + i);
+            
+            if (dayDate.getMonth() !== currentDate.getMonth()) {
+                dayDiv.classList.add('other-month');
+            }
+            
+            dayDiv.innerHTML = `
+                <div class="day-header">${dayDate.getDate()}</div>
+            `;
+            scheduleList.appendChild(dayDiv);
+        }
+    }
+
+    function updateCurrentDateDisplay() {
+        let dateString;
+        switch (currentView) {
+            case 'day':
+                dateString = currentDate.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+                break;
+            case 'week':
+                const weekStart = new Date(currentDate);
+                weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                dateString = `${weekStart.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })} - ${weekEnd.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}`;
+                break;
+            case 'month':
+                dateString = currentDate.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' });
+                break;
+        }
+        currentDateSpan.textContent = dateString;
+    }
+
+    // 初始化视图
+    updateView();
 }
 
 // 检查 CryptoJS 是否已加载
