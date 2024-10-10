@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!time) {
-            const defaultTime = prompt('未指��时间，请输入时间（如 14:00）：', '09:00');
+            const defaultTime = prompt('未指时间，请输入时间（如 14:00）：', '09:00');
             if (defaultTime) {
                 time = parseTime(defaultTime);
             } else {
@@ -142,11 +142,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showConfirmDialog(taskInfo) {
-        const confirmMessage = `是否添加以下任务到日历？\n标题: ${taskInfo.title}\n开始时间: ${taskInfo.start.toLocaleString()}\n结束时间: ${taskInfo.end.toLocaleString()}`;
-        if (confirm(confirmMessage)) {
-            calendar.addEvent(taskInfo);
-            updateChat(`已添加任务：${taskInfo.title}`);
-        } else {
+        const modal = document.getElementById('customModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const confirmBtn = document.getElementById('modalConfirm');
+        const cancelBtn = document.getElementById('modalCancel');
+
+        modalTitle.textContent = '确认添加任务';
+        modalBody.innerHTML = `
+            <p><strong>标题:</strong> ${taskInfo.title}</p>
+            <p><strong>开始时间:</strong> ${taskInfo.start.toLocaleString()}</p>
+            <p><strong>结束时间:</strong> ${taskInfo.end.toLocaleString()}</p>
+        `;
+
+        modal.style.display = 'block';
+
+        confirmBtn.onclick = function() {
+            const existingEvents = calendar.getEvents();
+            const conflict = existingEvents.some(event => 
+                (taskInfo.start < event.end && taskInfo.end > event.start)
+            );
+
+            if (conflict) {
+                if (confirm('检测到时间冲突。是否仍要添加此任务？')) {
+                    addEventToCalendar(taskInfo);
+                }
+            } else {
+                addEventToCalendar(taskInfo);
+            }
+            modal.style.display = 'none';
+        };
+
+        cancelBtn.onclick = function() {
             updateChat('已取消添加任务');
             modal.style.display = 'none';
         };
@@ -156,6 +183,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.style.display = 'none';
             }
         };
+    }
+
+    function addEventToCalendar(taskInfo) {
+        calendar.addEvent(taskInfo);
+        updateChat(`已添加任务：${taskInfo.title}`);
     }
 
     function updateChat(message) {
