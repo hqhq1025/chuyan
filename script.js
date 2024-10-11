@@ -130,7 +130,7 @@ function initApp() {
                                    解析'半小时后'，'2小时后'，'5分钟后'，'明天晚上'等相对时间表达，将其转换为具体的时间点。
 
                                 6. 处理模糊时间表达：
-                                   识别并��理用户可能输入的糊时间表达，例如'今天晚上'，'明天下午'等，将其转化为具体的时间段。
+                                   识别并理用户可能输入的糊时间表达，例如'今天晚上'，'明天下午'等，将其转化为具体的时间段。
 
                                 7. 如果用户未输入时间：
                                    如果用户没有明确指出时间，默认添加到当天，并标记为"全天任务"。
@@ -424,6 +424,11 @@ function initApp() {
         const weekHeader = document.createElement('div');
         weekHeader.className = 'week-header';
         
+        // 添加一个空的头部单元格，与时间列对齐
+        const emptyHeader = document.createElement('div');
+        emptyHeader.style.width = '60px';
+        weekHeader.appendChild(emptyHeader);
+
         for (let i = 0; i < 7; i++) {
             const dayColumn = document.createElement('div');
             dayColumn.className = 'day-column';
@@ -444,23 +449,32 @@ function initApp() {
         // 创建时间列
         const timeColumn = document.createElement('div');
         timeColumn.className = 'time-column';
+        const timeColumnContent = document.createElement('div');
+        timeColumnContent.className = 'time-column-content';
         for (let i = 0; i < 24; i++) {
             const hourDiv = document.createElement('div');
             hourDiv.className = 'hour';
-            hourDiv.innerHTML = `<span class="hour-label">${i.toString().padStart(2, '0')}:00</span>`;
-            timeColumn.appendChild(hourDiv);
+            const hourLabel = document.createElement('span');
+            hourLabel.className = 'hour-label';
+            hourLabel.textContent = `${i.toString().padStart(2, '0')}:00`;
+            hourDiv.appendChild(hourLabel);
+            timeColumnContent.appendChild(hourDiv);
         }
+        timeColumn.appendChild(timeColumnContent);
         weekContent.appendChild(timeColumn);
 
         // 创建每天的事件列
         for (let i = 0; i < 7; i++) {
             const dayEvents = document.createElement('div');
             dayEvents.className = 'day-events';
+            const dayColumnContent = document.createElement('div');
+            dayColumnContent.className = 'day-column-content';
             for (let j = 0; j < 24; j++) {
                 const hourDiv = document.createElement('div');
                 hourDiv.className = 'hour';
-                dayEvents.appendChild(hourDiv);
+                dayColumnContent.appendChild(hourDiv);
             }
+            dayEvents.appendChild(dayColumnContent);
             weekContent.appendChild(dayEvents);
         }
 
@@ -469,6 +483,11 @@ function initApp() {
 
     function renderMonthView() {
         scheduleList.className = 'schedule-list month-view';
+        const monthViewContainer = document.createElement('div');
+        monthViewContainer.className = 'month-view';
+        scheduleList.innerHTML = '';
+        scheduleList.appendChild(monthViewContainer);
+
         const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
         const startDate = new Date(firstDay);
@@ -476,7 +495,7 @@ function initApp() {
 
         const today = new Date();
 
-        for (let i = 0; i < 42; i++) {
+        for (let i = 0; i < 42; i++) { // 总是渲染6周
             const dayDiv = document.createElement('div');
             dayDiv.className = 'day';
             const dayDate = new Date(startDate);
@@ -496,8 +515,9 @@ function initApp() {
             
             dayDiv.innerHTML = `
                 <div class="day-header">${dayDate.getDate()}</div>
+                <div class="day-content"></div>
             `;
-            scheduleList.appendChild(dayDiv);
+            monthViewContainer.appendChild(dayDiv);
         }
     }
 

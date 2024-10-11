@@ -233,6 +233,7 @@ body {
     display: flex;
     border-bottom: 1px solid #e5e5ea;
     background-color: #f9f9f9;
+    padding-left: 60px; /* 为时间列留出空间 */
 }
 
 .week-view .day-column {
@@ -255,11 +256,17 @@ body {
     border-right: 1px solid #e5e5ea;
     font-size: 11px;
     color: #8e8e93;
+    position: sticky;
+    left: 0;
+    background-color: #fff;
+    z-index: 2;
+    padding-top: 10px; /* 添加顶部内边距 */
 }
 
 .week-view .day-events {
     flex: 1;
     position: relative;
+    min-width: 100px; /* 确保每一列有足够的宽度 */
 }
 
 .week-view .hour {
@@ -272,10 +279,18 @@ body {
     border-top: none;
 }
 
+.week-view .time-column .hour {
+    border-top: none;
+    text-align: right;
+    padding-right: 8px;
+}
+
 .week-view .hour-label {
     position: absolute;
-    left: 5px;
+    right: 8px;
     top: -7px;
+    font-size: 11px;
+    color: #8e8e93;
 }
 
 .week-view .schedule-item {
@@ -291,32 +306,67 @@ body {
     z-index: 10;
 }
 
+/* 添加新样式 */
+.week-view .day-column-content {
+    position: relative;
+    height: 1440px; /* 24小时 * 60px */
+}
+
+.week-view .time-column-content {
+    position: relative;
+    height: 1440px; /* 24小时 * 60px */
+}
+
 /* 月视图样式 */
+.schedule-list.month-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* 使用100%高度 */
+    overflow: hidden; /* 移除滚动 */
+}
+
 .month-view {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(6, 1fr); /* 6行，适应大多数月份 */
     gap: 1px;
     background-color: #e5e5ea;
+    flex: 1; /* 填充剩余空间 */
 }
 
 .month-view .day {
     background-color: #fff;
-    min-height: 100px;
-    padding: 8px;
+    padding: 5px;
     position: relative;
     transition: background-color 0.3s;
-}
-
-.month-view .day:hover {
-    background-color: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 隐藏溢出内容 */
 }
 
 .month-view .day-header {
     text-align: right;
-    font-size: 14px;
+    font-size: 12px;
     color: #8e8e93;
-    margin-bottom: 5px;
+    margin-bottom: 2px;
 }
+
+.month-view .schedule-item {
+    font-size: 9px;
+    padding: 1px 2px;
+    margin-bottom: 1px;
+    border-radius: 2px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* 移除滚动条相关样式 */
+.schedule-list.month-view::-webkit-scrollbar {
+    display: none;
+}
+
+/* 其他月视图样式保持不变 */
 
 .month-view .other-month {
     background-color: #f9f9f9;
@@ -334,24 +384,6 @@ body {
 .month-view .today .day-header {
     color: #007aff;
     font-weight: bold;
-}
-
-/* 滚动条样式 */
-.schedule-list::-webkit-scrollbar {
-    width: 8px;
-}
-
-.schedule-list::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.schedule-list::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
-}
-
-.schedule-list::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
 }
 
 /* 在现有样式的末尾添加以下内容 */
@@ -503,6 +535,8 @@ body {
     left: 0;
     right: 0;
     margin-bottom: 2px;
+    font-size: 10px; /* 减小字体大小 */
+    padding: 2px 4px; /* 减小内边距 */
 }
 
 .schedule-time {
@@ -519,6 +553,8 @@ body {
     left: 0;
     right: 0;
     margin-bottom: 2px;
+    font-size: 10px; /* 减小字体大小 */
+    padding: 2px 4px; /* 减小内边距 */
 }
 
 .day-view, .week-view {
@@ -594,4 +630,112 @@ body {
     text-overflow: ellipsis;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     z-index: 10;
+}
+
+/* 调整周视图时间列样式 */
+.week-view .time-column {
+    width: 60px;
+    border-right: 1px solid #e5e5ea;
+    font-size: 11px;
+    color: #8e8e93;
+    position: sticky;
+    left: 0;
+    background-color: #fff;
+    z-index: 2;
+    padding-top: 10px; /* 添加顶部内边距 */
+}
+
+.week-view .time-column .hour {
+    height: 60px;
+    position: relative;
+    text-align: right;
+    padding-right: 8px;
+    border-top: none;
+}
+
+.week-view .time-column .hour-label {
+    position: absolute;
+    right: 8px;
+    top: -6px; /* 稍微上移时间标签 */
+    font-size: 11px;
+    color: #8e8e93;
+}
+
+/* 调整周视图内容区域样式 */
+.week-view .week-content {
+    flex: 1;
+    display: flex;
+    overflow-y: auto;
+    border-top: 1px solid #e5e5ea; /* 添加顶部边框 */
+}
+
+.week-view .day-events {
+    flex: 1;
+    position: relative;
+    min-width: 100px;
+    border-right: 1px solid #e5e5ea;
+}
+
+.week-view .day-events:last-child {
+    border-right: none;
+}
+
+.week-view .day-column-content {
+    position: relative;
+    height: 1440px; /* 24小时 * 60px */
+}
+
+/* 调整周视图头部样式 */
+.week-view .week-header {
+    display: flex;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #e5e5ea;
+    padding-left: 60px; /* 为时间列留出空间 */
+}
+
+.week-view .day-column {
+    flex: 1;
+    text-align: center;
+    padding: 10px 5px;
+    font-weight: 500;
+    font-size: 13px;
+    color: #8e8e93;
+}
+
+/* 调整日程项样式 */
+.week-view .schedule-item {
+    position: absolute;
+    left: 0;
+    right: 0;
+    padding: 2px 4px;
+    margin: 0 2px;
+    border-radius: 4px;
+    font-size: 11px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    z-index: 10;
+}
+
+/* 确保滚动条出现在正确的位置 */
+.schedule-list.month-view {
+    overflow-y: auto;
+    max-height: calc(100vh - 100px); /* 调整高度，留出顶部导航的空间 */
+}
+
+.schedule-list.month-view::-webkit-scrollbar {
+    width: 8px;
+}
+
+.schedule-list.month-view::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.schedule-list.month-view::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.schedule-list.month-view::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
