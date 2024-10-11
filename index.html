@@ -39,6 +39,10 @@
             <div id="chatBox"></div>
             <input type="text" id="userInput" placeholder="输入新任务，例如：明天下午2点到4点开会">
             <button id="sendButton">添加</button>
+            
+            <h3>直接输入 JSON 格式日程</h3>
+            <textarea id="jsonInput" rows="4" placeholder='{"task": "产品评审会", "startTime": "2023-05-15T14:00:00", "endTime": "2023-05-15T16:00:00", "frequency": "once"}'></textarea>
+            <button id="addJsonSchedule">添加日程</button>
         </div>
     </div>
     <script src="script.js"></script>

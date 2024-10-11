@@ -92,7 +92,7 @@ function initApp() {
                     payload: {
                         message: {
                             text: [
-                                { role: "system", content: `你是一个智能日程助手。请解析用户输入的日程信息，包括任务内容、开始时间、结束时间和重复频率。请以JSON格式回复，包含以下字段：
+                                { role: "system", content: `你是一个智能日程助手。请解析用户输入的日程信息，包括���务内容、开始时间、结束时间和重复频率。请以JSON格式回复，包含以下字段：
                                 - task（任务内容）
                                 - startTime（开始时间，使用ISO 8601格式）
                                 - endTime（结束时间，使用ISO 8601格式）
@@ -378,6 +378,90 @@ function initApp() {
         return date1.getFullYear() === date2.getFullYear() &&
                date1.getMonth() === date2.getMonth() &&
                date1.getDate() === date2.getDate();
+    }
+
+    // 在 initApp 函数中添加以下代码
+    const jsonInput = document.getElementById('jsonInput');
+    const addJsonScheduleBtn = document.getElementById('addJsonSchedule');
+
+    addJsonScheduleBtn.addEventListener('click', handleJsonInput);
+
+    function handleJsonInput() {
+        const jsonText = jsonInput.value.trim();
+        if (jsonText) {
+            try {
+                const taskInfo = JSON.parse(jsonText);
+                if (isValidTaskInfo(taskInfo)) {
+                    showConfirmDialog(taskInfo);
+                } else {
+                    alert('无效的日程信息。请检查您的输入。');
+                }
+            } catch (error) {
+                alert('无效的 JSON 格式。请检查您的输入。');
+            }
+            jsonInput.value = '';
+        }
+    }
+
+    function isValidTaskInfo(taskInfo) {
+        return (
+            taskInfo.task &&
+            taskInfo.startTime &&
+            taskInfo.endTime &&
+            taskInfo.frequency &&
+            ['once', 'daily', 'weekly', 'monthly', 'yearly'].includes(taskInfo.frequency)
+        );
+    }
+
+    function showConfirmDialog(taskInfo) {
+        const dialog = document.createElement('div');
+        dialog.className = 'confirm-dialog';
+        const startTime = new Date(taskInfo.startTime);
+        const endTime = new Date(taskInfo.endTime);
+
+        dialog.innerHTML = `
+            <h3>确认添加任务</h3>
+            <p><strong>任务:</strong> ${taskInfo.task}</p>
+            <p><strong>开始时间:</strong> ${formatDateTime(startTime)}</p>
+            <p><strong>结束时间:</strong> ${formatDateTime(endTime)}</p>
+            <p><strong>重复:</strong> ${getFrequencyText(taskInfo.frequency)}</p>
+            <div class="dialog-buttons">
+                <button id="confirmTask">确认</button>
+                <button id="cancelTask">取消</button>
+            </div>
+        `;
+
+        document.body.appendChild(dialog);
+
+        document.getElementById('confirmTask').addEventListener('click', () => {
+            updateSchedule(taskInfo);
+            document.body.removeChild(dialog);
+        });
+
+        document.getElementById('cancelTask').addEventListener('click', () => {
+            document.body.removeChild(dialog);
+        });
+    }
+
+    function formatDateTime(date) {
+        return date.toLocaleString('zh-CN', { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit'
+        });
+    }
+
+    function getFrequencyText(frequency) {
+        const frequencyMap = {
+            'once': '一次性',
+            'daily': '每天',
+            'weekly': '每周',
+            'monthly': '每月',
+            'yearly': '每年'
+        };
+        return frequencyMap[frequency] || frequency;
     }
 }
 

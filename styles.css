@@ -366,3 +366,69 @@ body {
     color: #0056b3;
     text-decoration: underline;
 }
+
+#jsonInput {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    font-size: 14px;
+    resize: vertical;
+}
+
+#addJsonSchedule {
+    width: 100%;
+    padding: 10px;
+    background-color: #007aff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#addJsonSchedule:hover {
+    background-color: #0056b3;
+}
+
+.confirm-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.confirm-dialog h3 {
+    margin-top: 0;
+    color: #007aff;
+}
+
+.dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.dialog-buttons button {
+    margin-left: 10px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#confirmTask {
+    background-color: #007aff;
+    color: white;
+}
+
+#cancelTask {
+    background-color: #f2f2f7;
+    color: #007aff;
+}
