@@ -115,6 +115,7 @@ body {
 
 #chatBox {
     flex: 1;
+    min-height: 200px; /* 确保聊天框有足够的高度 */
     overflow-y: auto;
     margin-bottom: 10px;
     border: 1px solid #d2d2d7;
@@ -306,4 +307,62 @@ body {
 
 .schedule-list::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+/* 在现有样式的末尾添加以下内容 */
+
+.input-examples {
+    background-color: #f0f8ff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.input-examples h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #007aff;
+}
+
+.input-examples ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.input-examples li {
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #333;
+}
+
+/* 调整聊天区域的样式以适应新的示例区域 */
+.chat {
+    display: flex;
+    flex-direction: column;
+}
+
+#chatBox {
+    flex: 1;
+    min-height: 200px; /* 确保聊天框有足够的高度 */
+    overflow-y: auto;
+    margin-bottom: 10px;
+    border: 1px solid #d2d2d7;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+/* 在文件末尾添加以下样式 */
+
+.example-link {
+    color: #007aff;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.example-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
 }

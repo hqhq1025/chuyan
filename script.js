@@ -31,6 +31,16 @@ function initApp() {
     prevDateBtn.addEventListener('click', () => navigateDate(-1));
     nextDateBtn.addEventListener('click', () => navigateDate(1));
 
+    // 添加示例点击事件处理
+    const exampleLinks = document.querySelectorAll('.example-link');
+    exampleLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            userInput.value = link.textContent;
+            userInput.focus();
+        });
+    });
+
     async function handleUserInput() {
         const userText = userInput.value.trim();
         if (userText) {
