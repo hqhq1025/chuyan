@@ -226,7 +226,7 @@ function initApp() {
     function addScheduleToDay(scheduleElement, startTime, endTime) {
         if (isSameDay(startTime, currentDate)) {
             const scheduleList = document.querySelector('.schedule-list');
-            const dayStart = new Date(startTime).setHours(0, 0, 0, 0);
+            const dayStart = new Date(currentDate).setHours(0, 0, 0, 0);
             const minutesSinceDayStart = (startTime - dayStart) / (1000 * 60);
             const duration = (endTime - startTime) / (1000 * 60);
             
@@ -277,6 +277,9 @@ function initApp() {
             if (dayElement) {
                 scheduleElement.style.position = 'relative';
                 scheduleElement.style.height = 'auto';
+                scheduleElement.style.left = '0';
+                scheduleElement.style.right = '0';
+                scheduleElement.style.margin = '2px 0';
                 dayElement.appendChild(scheduleElement);
             }
         }
