@@ -92,13 +92,17 @@ function initApp() {
                     payload: {
                         message: {
                             text: [
-                                { role: "system", content: `你是一个智能日程助手。请解析用户输入的日程信息，包括任务内容、开始时间和结束时间。请以JSON格式回复，包含task（任务内容）、startTime（开始时间）和endTime（结束时间）字段。
+                                { role: "system", content: `你是一个智能日程助手。请解析用户输入的日程信息，包括任务内容、开始时间、结束时间和重复频率。请以JSON格式回复，包含以下字段：
+                                - task（任务内容）
+                                - startTime（开始时间，使用ISO 8601格式）
+                                - endTime（结束时间，使用ISO 8601格式）
+                                - frequency（重复频率，可能的值包括：'once'（一次性）, 'daily'（每天）, 'weekly'（每周）, 'monthly'（每月）, 'yearly'（每年），如果用户没有指定频率，默认为'once'）
                                 
-                                当前日期是 ${currentDate.toISOString().split('T')[0]}。请注意以下几点：
+                                当前日期是 ${new Date().toISOString().split('T')[0]}。请注意以下几点：
                                 1. 理解并正确解析相对时间词，如"今天"、"明天"、"后天"、"下周"等。
                                 2. 如果用户没有明确指定日期，默认为今天或最近的未来日期。
                                 3. 如果用户没有明确指定结束时间，默认持续1小时。
-                                4. 日期和时间请使用 ISO 8601 格式（YYYY-MM-DDTHH:mm:ss）。
+                                4. 正确解析重复频率，如"每天"、"每周"、"每月1号"等。
                                 5. 尽可能理解用户的意图，即使表达不够精确也要尝试解析。` },
                                 { role: "user", content: text }
                             ]
@@ -157,30 +161,52 @@ function initApp() {
         const startTime = new Date(taskInfo.startTime);
         const endTime = new Date(taskInfo.endTime);
         
+        let frequencyText = '';
+        switch (taskInfo.frequency) {
+            case 'daily':
+                frequencyText = '(每天)';
+                break;
+            case 'weekly':
+                frequencyText = '(每周)';
+                break;
+            case 'monthly':
+                frequencyText = '(每月)';
+                break;
+            case 'yearly':
+                frequencyText = '(每年)';
+                break;
+        }
+        
         taskElement.innerHTML = `
-            <p><strong>${formatTime(startTime)} - ${formatTime(endTime)}</strong></p>
+            <p><strong>${formatTime(startTime)} - ${formatTime(endTime)} ${frequencyText}</strong></p>
             <p>${taskInfo.task}</p>
         `;
         
         // 根据当前视图将任务添加到正确的位置
         switch (currentView) {
             case 'day':
-                scheduleList.appendChild(taskElement);
+                if (isSameDay(startTime, currentDate)) {
+                    scheduleList.appendChild(taskElement);
+                }
                 break;
             case 'week':
-                const dayColumn = scheduleList.children[startTime.getDay()];
-                if (dayColumn) {
-                    dayColumn.appendChild(taskElement);
+                if (isInCurrentWeek(startTime)) {
+                    const dayColumn = scheduleList.children[startTime.getDay()];
+                    if (dayColumn) {
+                        dayColumn.appendChild(taskElement);
+                    }
                 }
                 break;
             case 'month':
-                const dayElement = Array.from(scheduleList.children).find(el => 
-                    el.classList.contains('day') && 
-                    !el.classList.contains('other-month') && 
-                    el.querySelector('.day-header').textContent === startTime.getDate().toString()
-                );
-                if (dayElement) {
-                    dayElement.appendChild(taskElement);
+                if (startTime.getMonth() === currentDate.getMonth()) {
+                    const dayElement = Array.from(scheduleList.children).find(el => 
+                        el.classList.contains('day') && 
+                        !el.classList.contains('other-month') && 
+                        el.querySelector('.day-header').textContent === startTime.getDate().toString()
+                    );
+                    if (dayElement) {
+                        dayElement.appendChild(taskElement);
+                    }
                 }
                 break;
         }
@@ -337,6 +363,22 @@ function initApp() {
     // 初始化视图
     setActiveView('day');
     updateView();
+
+    // 添加辅助函数来检查日期是否在当前周
+    function isInCurrentWeek(date) {
+        const weekStart = new Date(currentDate);
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        return date >= weekStart && date <= weekEnd;
+    }
+
+    // 添加辅助函数来检查两个日期是否是同一天
+    function isSameDay(date1, date2) {
+        return date1.getFullYear() === date2.getFullYear() &&
+               date1.getMonth() === date2.getMonth() &&
+               date1.getDate() === date2.getDate();
+    }
 }
 
 // 检查 CryptoJS 是否已加载
