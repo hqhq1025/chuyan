@@ -77,6 +77,10 @@
 - 支持更复杂的重复性任务设置
 - 增强自然语言处理能力,支持更多口语化表达
 
+## 支持项目
+
+如果您觉得这个项目对您有帮助,或者您喜欢这个项目,请考虑给它一个 star ⭐️。您的支持是我们持续改进的动力!
+
 ## 贡献
 
 欢迎提交 issues 和 pull requests 来帮助改进这个项目。
@@ -87,4 +91,4 @@
 
 ## 联系
 
-如果您有任何问题或建议,请通过 [issues](https://github.com/yourusername/your-repo-name/issues) 与我们联系。
+如果您有任何问题或建议,请通过 [issues](https://github.com/hqhq1025/chuyan/issues) 与我们联系。
