@@ -85,7 +85,7 @@ body {
 .schedule-list {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
+    padding: 0 20px 20px 20px;
 }
 
 .task {
@@ -151,9 +151,8 @@ body {
 
 /* 日视图样式 */
 .day-view {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    position: relative;
+    min-height: 1500px; /* 24小时 * 60px + 60px全天任务区域 */
 }
 
 .day-view .hour {
@@ -162,6 +161,8 @@ body {
     position: relative;
     padding-left: 60px;
     min-height: 48px;
+    height: 60px;
+    border-top: 1px solid #e5e5ea;
 }
 
 .day-view .hour:first-child {
@@ -171,10 +172,8 @@ body {
 .day-view .hour-label {
     position: absolute;
     left: 10px;
-    top: -9px;
-    font-size: 11px;
+    font-size: 12px;
     color: #8e8e93;
-    font-weight: 500;
 }
 
 .day-view .task {
@@ -435,7 +434,7 @@ body {
 
 .schedule-item {
     position: absolute;
-    left: 60px;
+    left: 70px; /* 调整左边距，为时间轴留出空间 */
     right: 10px;
     padding: 4px 8px;
     border-radius: 4px;
@@ -445,6 +444,19 @@ body {
     white-space: nowrap;
     text-overflow: ellipsis;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+.week-view .schedule-item {
+    left: 5px;
+    right: 5px;
+}
+
+.month-view .schedule-item {
+    position: relative;
+    left: 0;
+    right: 0;
+    margin-bottom: 2px;
 }
 
 .schedule-time {
@@ -485,7 +497,7 @@ body {
 
 .schedule-item {
     position: absolute;
-    left: 60px;
+    left: 70px; /* 调整左边距，为时间轴留出空间 */
     right: 10px;
     padding: 4px 8px;
     border-radius: 4px;
@@ -501,4 +513,39 @@ body {
 .week-view .schedule-item {
     left: 5px;
     right: 5px;
+}
+
+/* 添加新的样式用于时间轴容器 */
+.time-axis {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 60px;
+    height: 100%;
+    border-right: 1px solid #e5e5ea;
+    z-index: 1;
+}
+
+/* 修改小时标签样式 */
+.hour-label {
+    position: absolute;
+    left: 10px;
+    font-size: 12px;
+    color: #8e8e93;
+}
+
+/* 修改日程项样式 */
+.schedule-item {
+    position: absolute;
+    left: 70px; /* 调整左边距，为时间轴留出空间 */
+    right: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #333;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    z-index: 10;
 }

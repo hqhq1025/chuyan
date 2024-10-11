@@ -265,11 +265,12 @@ function initApp() {
             const minutesSinceDayStart = (startTime - dayStart) / (1000 * 60);
             const duration = (endTime - startTime) / (1000 * 60);
             
-            scheduleElement.style.top = `${minutesSinceDayStart + 60}px`; // 60px for all-day tasks area
-            scheduleElement.style.height = `${duration}px`;
+            scheduleElement.style.top = `${(minutesSinceDayStart / 60) * 60 + 60}px`; // 60px for all-day tasks area
+            scheduleElement.style.height = `${(duration / 60) * 60}px`;
             scheduleElement.style.position = 'absolute';
             scheduleElement.style.left = '60px';
             scheduleElement.style.right = '10px';
+            scheduleElement.style.zIndex = '10';
             scheduleList.appendChild(scheduleElement);
         }
     }
@@ -277,12 +278,13 @@ function initApp() {
     function addScheduleToWeek(scheduleElement, startTime, endTime) {
         const weekStart = new Date(currentDate);
         weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        weekStart.setHours(0, 0, 0, 0);
         const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
+        weekEnd.setDate(weekEnd.getDate() + 7);
 
-        if (startTime >= weekStart && startTime <= weekEnd) {
+        if (startTime >= weekStart && startTime < weekEnd) {
             const weekView = document.querySelector('.week-view');
-            const dayIndex = startTime.getDay();
+            const dayIndex = (startTime.getDay() + 7 - weekStart.getDay()) % 7;
             const dayColumn = weekView.children[dayIndex];
             
             if (dayColumn) {
@@ -295,13 +297,17 @@ function initApp() {
                 scheduleElement.style.position = 'absolute';
                 scheduleElement.style.left = '5px';
                 scheduleElement.style.right = '5px';
+                scheduleElement.style.zIndex = '10';
                 dayColumn.appendChild(scheduleElement);
             }
         }
     }
 
     function addScheduleToMonth(scheduleElement, startTime) {
-        if (startTime.getMonth() === currentDate.getMonth() && startTime.getFullYear() === currentDate.getFullYear()) {
+        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+        if (startTime >= monthStart && startTime <= monthEnd) {
             const monthView = document.querySelector('.month-view');
             const dayElement = Array.from(monthView.children).find(el => 
                 el.classList.contains('day') && 
@@ -376,21 +382,35 @@ function initApp() {
 
     function renderDayView() {
         scheduleList.className = 'schedule-list day-view';
-        scheduleList.innerHTML = ''; // Clear previous content
+        scheduleList.innerHTML = '';
+        
+        // 创建时间轴容器
+        const timeAxis = document.createElement('div');
+        timeAxis.className = 'time-axis';
         
         // 添加全天任务区域
         const allDayTasks = document.createElement('div');
         allDayTasks.className = 'all-day-tasks';
         allDayTasks.innerHTML = '<div class="all-day-label">全天</div>';
+        allDayTasks.style.height = '60px';
         scheduleList.appendChild(allDayTasks);
 
         // 添加24小时的时间轴
         for (let i = 0; i < 24; i++) {
             const hourDiv = document.createElement('div');
             hourDiv.className = 'hour';
-            hourDiv.innerHTML = `<span class="hour-label">${i.toString().padStart(2, '0')}:00</span>`;
+            hourDiv.style.height = '60px';
+            
+            const hourLabel = document.createElement('span');
+            hourLabel.className = 'hour-label';
+            hourLabel.textContent = `${i.toString().padStart(2, '0')}:00`;
+            hourLabel.style.top = `${i * 60 + 60}px`; // 60px for all-day tasks area
+            
+            timeAxis.appendChild(hourLabel);
             scheduleList.appendChild(hourDiv);
         }
+        
+        scheduleList.appendChild(timeAxis);
     }
 
     function renderWeekView() {
@@ -492,7 +512,7 @@ function initApp() {
         return date >= weekStart && date <= weekEnd;
     }
 
-    // 添加辅助函数来检查两个日期是否是同一天
+    // 添加辅助函数来检查两个日期是否是���一天
     function isSameDay(date1, date2) {
         return date1.getFullYear() === date2.getFullYear() &&
                date1.getMonth() === date2.getMonth() &&
@@ -592,7 +612,9 @@ function initApp() {
         // 重新渲染所有日程
         allSchedules.forEach(taskInfo => {
             const scheduleElement = createScheduleElement(taskInfo);
-            addScheduleToView(scheduleElement, new Date(taskInfo.startTime), new Date(taskInfo.endTime));
+            const startTime = new Date(taskInfo.startTime);
+            const endTime = new Date(taskInfo.endTime);
+            addScheduleToView(scheduleElement, startTime, endTime);
         });
     }
 
