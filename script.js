@@ -226,10 +226,17 @@ function initApp() {
 
     function renderDayView() {
         scheduleList.className = 'schedule-list day-view';
+        
+        // 添加全天任务区域
+        const allDayTasks = document.createElement('div');
+        allDayTasks.className = 'all-day-tasks';
+        allDayTasks.innerHTML = '<div class="all-day-label">全天</div>';
+        scheduleList.appendChild(allDayTasks);
+
         for (let i = 0; i < 24; i++) {
             const hourDiv = document.createElement('div');
             hourDiv.className = 'hour';
-            hourDiv.innerHTML = `<span class="hour-label">${i}:00</span>`;
+            hourDiv.innerHTML = `<span class="hour-label">${i.toString().padStart(2, '0')}:00</span>`;
             scheduleList.appendChild(hourDiv);
         }
     }

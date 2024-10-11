@@ -23,21 +23,25 @@ body {
     flex-direction: column;
     background-color: #ffffff;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
 }
 
 .schedule-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
-    border-bottom: 1px solid #d2d2d7;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .view-selector {
     display: flex;
-    background-color: #f2f2f7;
+    background-color: #e4e4e4;
     border-radius: 6px;
     overflow: hidden;
+    padding: 2px;
 }
 
 .view-selector button {
@@ -48,17 +52,19 @@ body {
     font-size: 13px;
     color: #007aff;
     transition: background-color 0.3s, color 0.3s;
+    border-radius: 4px;
 }
 
 .view-selector button.active {
-    background-color: #007aff;
-    color: #ffffff;
+    background-color: #ffffff;
+    color: #007aff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .date-navigator {
     display: flex;
     align-items: center;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 500;
 }
 
@@ -69,6 +75,11 @@ body {
     cursor: pointer;
     color: #007aff;
     padding: 0 10px;
+    transition: color 0.3s;
+}
+
+.date-navigator button:hover {
+    color: #0056b3;
 }
 
 .schedule-list {
@@ -78,13 +89,19 @@ body {
 }
 
 .task {
-    background-color: #e4f1fe;
+    background-color: #f0f8ff;
     border-left: 4px solid #007aff;
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
     font-size: 14px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.task:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .chat {
@@ -132,18 +149,77 @@ body {
 }
 
 /* 日视图样式 */
+.day-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 .day-view .hour {
-    height: 60px;
-    border-bottom: 1px solid #e5e5ea;
+    flex: 1;
+    border-top: 1px solid #e5e5ea;
     position: relative;
+    padding-left: 60px;
+    min-height: 48px;
+}
+
+.day-view .hour:first-child {
+    border-top: none;
 }
 
 .day-view .hour-label {
     position: absolute;
     left: 10px;
-    top: -10px;
-    font-size: 12px;
+    top: -9px;
+    font-size: 11px;
     color: #8e8e93;
+    font-weight: 500;
+}
+
+.day-view .task {
+    position: absolute;
+    left: 60px;
+    right: 10px;
+    background-color: #ebf5ff;
+    border-left: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    z-index: 1;
+}
+
+.day-view .task::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #007aff;
+}
+
+.day-view .all-day-tasks {
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #e5e5ea;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.day-view .all-day-tasks .task {
+    position: relative;
+    left: 0;
+    right: 0;
+    margin-bottom: 5px;
+}
+
+.day-view .all-day-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8e8e93;
+    margin-bottom: 5px;
 }
 
 /* 周视图样式 */
@@ -154,6 +230,10 @@ body {
 .week-view .day-column {
     flex: 1;
     border-right: 1px solid #e5e5ea;
+}
+
+.week-view .day-column:last-child {
+    border-right: none;
 }
 
 .week-view .day-header {
@@ -176,8 +256,13 @@ body {
 .month-view .day {
     background-color: #fff;
     min-height: 100px;
-    padding: 5px;
+    padding: 8px;
     position: relative;
+    transition: background-color 0.3s;
+}
+
+.month-view .day:hover {
+    background-color: #f5f5f5;
 }
 
 .month-view .day-header {
@@ -188,7 +273,7 @@ body {
 }
 
 .month-view .other-month {
-    background-color: #f2f2f7;
+    background-color: #f9f9f9;
 }
 
 .month-view .current-day .day-header {
@@ -205,38 +290,20 @@ body {
     font-weight: bold;
 }
 
-/* 聊天界面样式 */
-#chatBox {
-    flex: 1;
-    overflow-y: auto;
-    margin-bottom: 10px;
-    border: 1px solid #d2d2d7;
-    padding: 10px;
-    border-radius: 6px;
+/* 滚动条样式 */
+.schedule-list::-webkit-scrollbar {
+    width: 8px;
 }
 
-#userInput {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #d2d2d7;
-    border-radius: 6px;
-    font-size: 14px;
+.schedule-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
 }
 
-#sendButton {
-    width: 100%;
-    padding: 10px;
-    background-color: #007aff;
-    color: white;
-    border: none;
-    cursor: pointer;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 500;
-    transition: background-color 0.3s;
+.schedule-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
 }
 
-#sendButton:hover {
-    background-color: #0056b3;
+.schedule-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
