@@ -130,7 +130,7 @@ function initApp() {
                                    解析'半小时后'，'2小时后'，'5分钟后'，'明天晚上'等相对时间表达，将其转换为具体的时间点。
 
                                 6. 处理模糊时间表达：
-                                   识别并处理用户可能输入的模糊时间表达，例如'今天晚上'，'明天下午'等，将其转化为具体的时间段。
+                                   识别并��理用户可能输入的糊时间表达，例如'今天晚上'，'明天下午'等，将其转化为具体的时间段。
 
                                 7. 如果用户未输入时间：
                                    如果用户没有明确指出时间，默认添加到当天，并标记为"全天任务"。
@@ -283,20 +283,20 @@ function initApp() {
         weekEnd.setDate(weekEnd.getDate() + 7);
 
         if (startTime >= weekStart && startTime < weekEnd) {
-            const weekView = document.querySelector('.week-view');
+            const weekView = document.querySelector('.week-content');
             const dayIndex = (startTime.getDay() + 7 - weekStart.getDay()) % 7;
-            const dayColumn = weekView.children[dayIndex];
+            const dayColumn = weekView.children[dayIndex + 1]; // +1 because of time column
             
             if (dayColumn) {
                 const dayStart = new Date(startTime).setHours(0, 0, 0, 0);
                 const minutesSinceDayStart = (startTime - dayStart) / (1000 * 60);
                 const duration = (endTime - startTime) / (1000 * 60);
                 
-                scheduleElement.style.top = `${minutesSinceDayStart + 30}px`; // 30px for day header
+                scheduleElement.style.top = `${minutesSinceDayStart}px`;
                 scheduleElement.style.height = `${duration}px`;
                 scheduleElement.style.position = 'absolute';
-                scheduleElement.style.left = '5px';
-                scheduleElement.style.right = '5px';
+                scheduleElement.style.left = '1px';
+                scheduleElement.style.right = '1px';
                 scheduleElement.style.zIndex = '10';
                 dayColumn.appendChild(scheduleElement);
             }
@@ -415,10 +415,14 @@ function initApp() {
 
     function renderWeekView() {
         scheduleList.className = 'schedule-list week-view';
-        scheduleList.innerHTML = ''; // Clear previous content
+        scheduleList.innerHTML = '';
 
         const weekStart = new Date(currentDate);
         weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+
+        // 创建周视图头部
+        const weekHeader = document.createElement('div');
+        weekHeader.className = 'week-header';
         
         for (let i = 0; i < 7; i++) {
             const dayColumn = document.createElement('div');
@@ -426,16 +430,41 @@ function initApp() {
             const dayDate = new Date(weekStart);
             dayDate.setDate(dayDate.getDate() + i);
             dayColumn.innerHTML = `
-                <div class="day-header">${dayDate.toLocaleDateString('zh-CN', { weekday: 'short', month: 'numeric', day: 'numeric' })}</div>
+                <div>${dayDate.toLocaleDateString('zh-CN', { weekday: 'short' })}</div>
+                <div>${dayDate.getDate()}</div>
             `;
-            // 添加24小时的时间轴
+            weekHeader.appendChild(dayColumn);
+        }
+        scheduleList.appendChild(weekHeader);
+
+        // 创建周视图内容
+        const weekContent = document.createElement('div');
+        weekContent.className = 'week-content';
+
+        // 创建时间列
+        const timeColumn = document.createElement('div');
+        timeColumn.className = 'time-column';
+        for (let i = 0; i < 24; i++) {
+            const hourDiv = document.createElement('div');
+            hourDiv.className = 'hour';
+            hourDiv.innerHTML = `<span class="hour-label">${i.toString().padStart(2, '0')}:00</span>`;
+            timeColumn.appendChild(hourDiv);
+        }
+        weekContent.appendChild(timeColumn);
+
+        // 创建每天的事件列
+        for (let i = 0; i < 7; i++) {
+            const dayEvents = document.createElement('div');
+            dayEvents.className = 'day-events';
             for (let j = 0; j < 24; j++) {
                 const hourDiv = document.createElement('div');
                 hourDiv.className = 'hour';
-                dayColumn.appendChild(hourDiv);
+                dayEvents.appendChild(hourDiv);
             }
-            scheduleList.appendChild(dayColumn);
+            weekContent.appendChild(dayEvents);
         }
+
+        scheduleList.appendChild(weekContent);
     }
 
     function renderMonthView() {
@@ -512,7 +541,7 @@ function initApp() {
         return date >= weekStart && date <= weekEnd;
     }
 
-    // 添加辅助函数来检查两个日期是否是���一天
+    // 添加辅助函数来检查两个日期是否是一天
     function isSameDay(date1, date2) {
         return date1.getFullYear() === date2.getFullYear() &&
                date1.getMonth() === date2.getMonth() &&

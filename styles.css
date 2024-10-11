@@ -225,24 +225,70 @@ body {
 /* 周视图样式 */
 .week-view {
     display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.week-view .week-header {
+    display: flex;
+    border-bottom: 1px solid #e5e5ea;
+    background-color: #f9f9f9;
 }
 
 .week-view .day-column {
     flex: 1;
-    border-right: 1px solid #e5e5ea;
-}
-
-.week-view .day-column:last-child {
-    border-right: none;
-}
-
-.week-view .day-header {
     text-align: center;
     padding: 10px 5px;
-    border-bottom: 1px solid #e5e5ea;
     font-weight: 500;
     font-size: 13px;
     color: #8e8e93;
+}
+
+.week-view .week-content {
+    flex: 1;
+    display: flex;
+    overflow-y: auto;
+}
+
+.week-view .time-column {
+    width: 60px;
+    border-right: 1px solid #e5e5ea;
+    font-size: 11px;
+    color: #8e8e93;
+}
+
+.week-view .day-events {
+    flex: 1;
+    position: relative;
+}
+
+.week-view .hour {
+    height: 60px;
+    border-top: 1px solid #f0f0f0;
+    position: relative;
+}
+
+.week-view .hour:first-child {
+    border-top: none;
+}
+
+.week-view .hour-label {
+    position: absolute;
+    left: 5px;
+    top: -7px;
+}
+
+.week-view .schedule-item {
+    position: absolute;
+    left: 1px;
+    right: 1px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 11px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    z-index: 10;
 }
 
 /* 月视图样式 */
