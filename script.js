@@ -18,6 +18,9 @@ function initApp() {
     let currentView = 'day';
     let currentDate = new Date();
 
+    // 在文件顶部添加一个数组来存储所有的日程
+    let allSchedules = [];
+
     sendButton.addEventListener('click', handleUserInput);
     userInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -92,18 +95,21 @@ function initApp() {
                     payload: {
                         message: {
                             text: [
-                                { role: "system", content: `你是一个智能日程助手。请解析用户输入的日程信息，包括���务内容、开始时间、结束时间和重复频率。请以JSON格式回复，包含以下字段：
-                                - task（任务内容）
-                                - startTime（开始时间，使用ISO 8601格式）
-                                - endTime（结束时间，使用ISO 8601格式）
-                                - frequency（重复频率，可能的值包括：'once'（一次性）, 'daily'（每天）, 'weekly'（每周）, 'monthly'（每月）, 'yearly'（每年），如果用户没有指定频率，默认为'once'）
+                                { role: "system", content: `你是一个智能日程助手。请解析用户输入的日程信息，包括务内容、开始时间、结束时间和重复频率。请直接以JSON格式回复，不要添加任何额外的文、引号、注释或前缀。你的回复应该可以直接被 JSON.parse() 解析，不需要任何预处理。回复应该包含以下字段：
+                                - task（任务内容，字符串类型）
+                                - startTime（开始时间，ISO 8601格式的字符串）
+                                - endTime（结束时间，ISO 8601格式的字符串）
+                                - frequency（重复频率，字符串类型，可能的值包括：'once'（一次性）, 'daily'（每天）, 'weekly'（每周）, 'monthly'（每月）, 'yearly'（每年），如果用户没有指定频率，默认为'once'）
                                 
                                 当前日期是 ${new Date().toISOString().split('T')[0]}。请注意以下几点：
                                 1. 理解并正确解析相对时间词，如"今天"、"明天"、"后天"、"下周"等。
-                                2. 如果用户没有明确指定日期，默认为今天或最近的未来日期。
+                                2. 果用户没有明确指定日期，默认为今天或最近的未来日期。
                                 3. 如果用户没有明确指定结束时间，默认持续1小时。
                                 4. 正确解析重复频率，如"每天"、"每周"、"每月1号"等。
-                                5. 尽可能理解用户的意图，即使表达不够精确也要尝试解析。` },
+                                5. 尽可能理解用户的意图，即使表达不够精确也要尝试解析。
+                                6. 确保输出的JSON格式完全正确，不包含任何非JSON内容。
+                                7. 不要在JSON外添加任何额外的文本说明或注释。
+                                8. 你的回复应该是一个可以直接被JavaScript的JSON.parse()函数解析的字符串。` },
                                 { role: "user", content: text }
                             ]
                         }
@@ -147,69 +153,138 @@ function initApp() {
 
     function parseResponse(response) {
         try {
-            return JSON.parse(response);
+            // 尝试直接解析响应
+            const parsedData = JSON.parse(response);
+            
+            // 确保所有必要的字段都存在
+            if (!parsedData.task || !parsedData.startTime || !parsedData.endTime || !parsedData.frequency) {
+                throw new Error('Missing required fields in the response');
+            }
+            
+            return parsedData;
         } catch (error) {
             console.error('Failed to parse response:', error);
-            return null;
+            console.error('Original response:', response);
+            
+            // 如果直接解析失败，尝试清理响应并重新解析
+            try {
+                let cleanedResponse = response.replace(/^json/i, '').trim();
+                if (cleanedResponse.startsWith('"') && cleanedResponse.endsWith('"')) {
+                    cleanedResponse = cleanedResponse.slice(1, -1);
+                }
+                cleanedResponse = cleanedResponse.replace(/\\"/g, '"');
+                
+                const parsedData = JSON.parse(cleanedResponse);
+                
+                if (!parsedData.task || !parsedData.startTime || !parsedData.endTime || !parsedData.frequency) {
+                    throw new Error('Missing required fields in the cleaned response');
+                }
+                
+                return parsedData;
+            } catch (cleanError) {
+                console.error('Failed to parse cleaned response:', cleanError);
+                return null;
+            }
         }
     }
 
     function updateSchedule(taskInfo) {
-        const taskElement = document.createElement('div');
-        taskElement.className = 'task';
+        allSchedules.push(taskInfo); // 将新的日程添加到数组中
+        renderSchedules(); // 重新渲染所有日程
+    }
+
+    function createScheduleElement(taskInfo) {
+        const scheduleElement = document.createElement('div');
+        scheduleElement.className = 'schedule-item';
+        scheduleElement.style.backgroundColor = getRandomColor();
         
         const startTime = new Date(taskInfo.startTime);
         const endTime = new Date(taskInfo.endTime);
         
-        let frequencyText = '';
-        switch (taskInfo.frequency) {
-            case 'daily':
-                frequencyText = '(每天)';
-                break;
-            case 'weekly':
-                frequencyText = '(每周)';
-                break;
-            case 'monthly':
-                frequencyText = '(每月)';
-                break;
-            case 'yearly':
-                frequencyText = '(每年)';
-                break;
-        }
-        
-        taskElement.innerHTML = `
-            <p><strong>${formatTime(startTime)} - ${formatTime(endTime)} ${frequencyText}</strong></p>
-            <p>${taskInfo.task}</p>
+        scheduleElement.innerHTML = `
+            <div class="schedule-time">${formatTime(startTime)} - ${formatTime(endTime)}</div>
+            <div class="schedule-title">${taskInfo.task}</div>
         `;
         
-        // 根据当前视图将任务添加到正确的位置
+        return scheduleElement;
+    }
+
+    function addScheduleToView(scheduleElement, startTime, endTime) {
         switch (currentView) {
             case 'day':
-                if (isSameDay(startTime, currentDate)) {
-                    scheduleList.appendChild(taskElement);
-                }
+                addScheduleToDay(scheduleElement, startTime, endTime);
                 break;
             case 'week':
-                if (isInCurrentWeek(startTime)) {
-                    const dayColumn = scheduleList.children[startTime.getDay()];
-                    if (dayColumn) {
-                        dayColumn.appendChild(taskElement);
-                    }
-                }
+                addScheduleToWeek(scheduleElement, startTime, endTime);
                 break;
             case 'month':
-                if (startTime.getMonth() === currentDate.getMonth()) {
-                    const dayElement = Array.from(scheduleList.children).find(el => 
-                        el.classList.contains('day') && 
-                        !el.classList.contains('other-month') && 
-                        el.querySelector('.day-header').textContent === startTime.getDate().toString()
-                    );
-                    if (dayElement) {
-                        dayElement.appendChild(taskElement);
-                    }
-                }
+                addScheduleToMonth(scheduleElement, startTime);
                 break;
         }
+    }
+
+    function addScheduleToDay(scheduleElement, startTime, endTime) {
+        if (isSameDay(startTime, currentDate)) {
+            const scheduleList = document.querySelector('.schedule-list');
+            const dayStart = new Date(startTime).setHours(0, 0, 0, 0);
+            const minutesSinceDayStart = (startTime - dayStart) / (1000 * 60);
+            const duration = (endTime - startTime) / (1000 * 60);
+            
+            scheduleElement.style.top = `${minutesSinceDayStart + 60}px`; // 60px for all-day tasks area
+            scheduleElement.style.height = `${duration}px`;
+            scheduleElement.style.position = 'absolute';
+            scheduleElement.style.left = '60px';
+            scheduleElement.style.right = '10px';
+            scheduleList.appendChild(scheduleElement);
+        }
+    }
+
+    function addScheduleToWeek(scheduleElement, startTime, endTime) {
+        const weekStart = new Date(currentDate);
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+
+        if (startTime >= weekStart && startTime <= weekEnd) {
+            const weekView = document.querySelector('.week-view');
+            const dayIndex = startTime.getDay();
+            const dayColumn = weekView.children[dayIndex];
+            
+            if (dayColumn) {
+                const dayStart = new Date(startTime).setHours(0, 0, 0, 0);
+                const minutesSinceDayStart = (startTime - dayStart) / (1000 * 60);
+                const duration = (endTime - startTime) / (1000 * 60);
+                
+                scheduleElement.style.top = `${minutesSinceDayStart + 30}px`; // 30px for day header
+                scheduleElement.style.height = `${duration}px`;
+                scheduleElement.style.position = 'absolute';
+                scheduleElement.style.left = '5px';
+                scheduleElement.style.right = '5px';
+                dayColumn.appendChild(scheduleElement);
+            }
+        }
+    }
+
+    function addScheduleToMonth(scheduleElement, startTime) {
+        if (startTime.getMonth() === currentDate.getMonth() && startTime.getFullYear() === currentDate.getFullYear()) {
+            const monthView = document.querySelector('.month-view');
+            const dayElement = Array.from(monthView.children).find(el => 
+                el.classList.contains('day') && 
+                !el.classList.contains('other-month') && 
+                parseInt(el.querySelector('.day-header').textContent) === startTime.getDate()
+            );
+            
+            if (dayElement) {
+                scheduleElement.style.position = 'relative';
+                scheduleElement.style.height = 'auto';
+                dayElement.appendChild(scheduleElement);
+            }
+        }
+    }
+
+    function getRandomColor() {
+        const hue = Math.floor(Math.random() * 360);
+        return `hsl(${hue}, 70%, 80%)`;
     }
 
     function formatTime(date) {
@@ -258,10 +333,12 @@ function initApp() {
                 break;
         }
         updateCurrentDateDisplay();
+        renderSchedules(); // 在视图更新后重新渲染所有日程
     }
 
     function renderDayView() {
         scheduleList.className = 'schedule-list day-view';
+        scheduleList.innerHTML = ''; // Clear previous content
         
         // 添加全天任务区域
         const allDayTasks = document.createElement('div');
@@ -269,6 +346,7 @@ function initApp() {
         allDayTasks.innerHTML = '<div class="all-day-label">全天</div>';
         scheduleList.appendChild(allDayTasks);
 
+        // 添加24小时的时间轴
         for (let i = 0; i < 24; i++) {
             const hourDiv = document.createElement('div');
             hourDiv.className = 'hour';
@@ -279,6 +357,8 @@ function initApp() {
 
     function renderWeekView() {
         scheduleList.className = 'schedule-list week-view';
+        scheduleList.innerHTML = ''; // Clear previous content
+
         const weekStart = new Date(currentDate);
         weekStart.setDate(weekStart.getDate() - weekStart.getDay());
         
@@ -290,6 +370,7 @@ function initApp() {
             dayColumn.innerHTML = `
                 <div class="day-header">${dayDate.toLocaleDateString('zh-CN', { weekday: 'short', month: 'numeric', day: 'numeric' })}</div>
             `;
+            // 添加24小时的时间轴
             for (let j = 0; j < 24; j++) {
                 const hourDiv = document.createElement('div');
                 hourDiv.className = 'hour';
@@ -463,6 +544,22 @@ function initApp() {
         };
         return frequencyMap[frequency] || frequency;
     }
+
+    // 添加新的 renderSchedules 函数
+    function renderSchedules() {
+        // 清空当前的日程显示
+        const scheduleItems = document.querySelectorAll('.schedule-item');
+        scheduleItems.forEach(item => item.remove());
+
+        // 重新渲染所有日程
+        allSchedules.forEach(taskInfo => {
+            const scheduleElement = createScheduleElement(taskInfo);
+            addScheduleToView(scheduleElement, new Date(taskInfo.startTime), new Date(taskInfo.endTime));
+        });
+    }
+
+    // 确保在初始化时调用 renderSchedules
+    renderSchedules();
 }
 
 // 检查 CryptoJS 是否已加载

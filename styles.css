@@ -432,3 +432,73 @@ body {
     background-color: #f2f2f7;
     color: #007aff;
 }
+
+.schedule-item {
+    position: absolute;
+    left: 60px;
+    right: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #333;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.schedule-time {
+    font-weight: bold;
+}
+
+.schedule-title {
+    margin-top: 2px;
+}
+
+/* 调整月视图中的日程项样式 */
+.month-view .schedule-item {
+    position: relative;
+    left: 0;
+    right: 0;
+    margin-bottom: 2px;
+}
+
+.day-view, .week-view {
+    position: relative;
+}
+
+.day-view .hour, .week-view .hour {
+    height: 60px;
+    border-top: 1px solid #e5e5ea;
+    position: relative;
+}
+
+.week-view .day-column {
+    flex: 1;
+    border-right: 1px solid #e5e5ea;
+    position: relative;
+}
+
+.week-view .day-column:last-child {
+    border-right: none;
+}
+
+.schedule-item {
+    position: absolute;
+    left: 60px;
+    right: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #333;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+.week-view .schedule-item {
+    left: 5px;
+    right: 5px;
+}
