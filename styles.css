@@ -11,731 +11,170 @@ body {
     height: 100vh;
 }
 
-.schedule, .chat {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-}
-
 .schedule {
     flex: 3;
-    display: flex;
-    flex-direction: column;
+    padding: 20px;
     background-color: #ffffff;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.schedule-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-.view-selector {
-    display: flex;
-    background-color: #e4e4e4;
-    border-radius: 6px;
-    overflow: hidden;
-    padding: 2px;
-}
-
-.view-selector button {
-    background-color: transparent;
-    border: none;
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 13px;
-    color: #007aff;
-    transition: background-color 0.3s, color 0.3s;
-    border-radius: 4px;
-}
-
-.view-selector button.active {
-    background-color: #ffffff;
-    color: #007aff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.date-navigator {
-    display: flex;
-    align-items: center;
-    font-size: 20px;
-    font-weight: 500;
-}
-
-.date-navigator button {
-    background-color: transparent;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #007aff;
-    padding: 0 10px;
-    transition: color 0.3s;
-}
-
-.date-navigator button:hover {
-    color: #0056b3;
-}
-
-.schedule-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0 20px 20px 20px;
-}
-
-.task {
-    background-color: #f0f8ff;
-    border-left: 4px solid #007aff;
-    padding: 12px;
-    margin-bottom: 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.task:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .chat {
     flex: 1;
     padding: 20px;
-    background-color: #ffffff;
-    border-left: 1px solid #d2d2d7;
+    background-color: #f5f5f7;
     display: flex;
     flex-direction: column;
+    border-left: 1px solid #d2d2d7;
+}
+
+#calendar {
+    height: calc(100% - 40px);
+}
+
+.fc .fc-toolbar-title {
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.fc .fc-button-primary {
+    background-color: #0071e3;
+    border-color: #0071e3;
+}
+
+.fc .fc-button-primary:not(:disabled):active,
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+    background-color: #0058b0;
+    border-color: #0058b0;
+}
+
+.fc-daygrid-day-number,
+.fc-col-header-cell-cushion {
+    color: #1d1d1f;
+    text-decoration: none;
+}
+
+.fc-daygrid-event {
+    background-color: #0071e3;
+    border-color: #0071e3;
+    color: #ffffff;
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+.input-samples {
+    margin-bottom: 15px;
+}
+
+.input-samples button {
+    margin-right: 5px;
+    margin-bottom: 5px;
+    padding: 5px 10px;
+    background-color: #e0e0e0;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
 }
 
 #chatBox {
-    flex: 1;
-    min-height: 200px; /* 确保聊天框有足够的高度 */
+    flex-grow: 1;
     overflow-y: auto;
-    margin-bottom: 10px;
-    border: 1px solid #d2d2d7;
-    padding: 10px;
-    border-radius: 6px;
+    margin-bottom: 15px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 #userInput {
-    width: 100%;
+    width: calc(100% - 80px);
     padding: 10px;
-    margin-bottom: 10px;
+    margin-right: 10px;
     border: 1px solid #d2d2d7;
-    border-radius: 6px;
+    border-radius: 5px;
     font-size: 14px;
 }
 
 #sendButton {
-    width: 100%;
+    width: 70px;
     padding: 10px;
-    background-color: #007aff;
-    color: white;
+    background-color: #0071e3;
+    color: #ffffff;
     border: none;
+    border-radius: 5px;
     cursor: pointer;
-    border-radius: 6px;
-    font-size: 16px;
+    font-size: 14px;
+}
+
+h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
     font-weight: 500;
-    transition: background-color 0.3s;
+    color: #1d1d1f;
 }
 
-#sendButton:hover {
-    background-color: #0056b3;
-}
-
-/* 日视图样式 */
-.day-view {
-    position: relative;
-    min-height: 1500px; /* 24小时 * 60px + 60px全天任务区域 */
-}
-
-.day-view .hour {
-    flex: 1;
-    border-top: 1px solid #e5e5ea;
-    position: relative;
-    padding-left: 60px;
-    min-height: 48px;
-    height: 60px;
-    border-top: 1px solid #e5e5ea;
-}
-
-.day-view .hour:first-child {
-    border-top: none;
-}
-
-.day-view .hour-label {
-    position: absolute;
-    left: 10px;
-    font-size: 12px;
-    color: #8e8e93;
-}
-
-.day-view .task {
-    position: absolute;
-    left: 60px;
-    right: 10px;
-    background-color: #ebf5ff;
-    border-left: none;
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 12px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    z-index: 1;
-}
-
-.day-view .task::before {
-    content: '';
-    position: absolute;
+/* 在文件末尾添加 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
     left: 0;
     top: 0;
-    bottom: 0;
-    width: 2px;
-    background-color: #007aff;
-}
-
-.day-view .all-day-tasks {
-    background-color: #f9f9f9;
-    border-bottom: 1px solid #e5e5ea;
-    padding: 10px;
-    margin-bottom: 10px;
-}
-
-.day-view .all-day-tasks .task {
-    position: relative;
-    left: 0;
-    right: 0;
-    margin-bottom: 5px;
-}
-
-.day-view .all-day-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: #8e8e93;
-    margin-bottom: 5px;
-}
-
-/* 周视图样式 */
-.week-view {
-    display: flex;
-    flex-direction: column;
+    width: 100%;
     height: 100%;
+    background-color: rgba(0,0,0,0.5);
 }
 
-.week-view .week-header {
-    display: flex;
-    border-bottom: 1px solid #e5e5ea;
-    background-color: #f9f9f9;
-    padding-left: 60px; /* 为时间列留出空间 */
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    animation: modalFadeIn 0.3s;
 }
 
-.week-view .day-column {
-    flex: 1;
-    text-align: center;
-    padding: 10px 5px;
-    font-weight: 500;
-    font-size: 13px;
-    color: #8e8e93;
+@keyframes modalFadeIn {
+    from {opacity: 0; transform: scale(0.8);}
+    to {opacity: 1; transform: scale(1);}
 }
 
-.week-view .week-content {
-    flex: 1;
-    display: flex;
-    overflow-y: auto;
-}
-
-.week-view .time-column {
-    width: 60px;
-    border-right: 1px solid #e5e5ea;
-    font-size: 11px;
-    color: #8e8e93;
-    position: sticky;
-    left: 0;
-    background-color: #fff;
-    z-index: 2;
-    padding-top: 10px; /* 添加顶部内边距 */
-}
-
-.week-view .day-events {
-    flex: 1;
-    position: relative;
-    min-width: 100px; /* 确保每一列有足够的宽度 */
-}
-
-.week-view .hour {
-    height: 60px;
-    border-top: 1px solid #f0f0f0;
-    position: relative;
-}
-
-.week-view .hour:first-child {
-    border-top: none;
-}
-
-.week-view .time-column .hour {
-    border-top: none;
-    text-align: right;
-    padding-right: 8px;
-}
-
-.week-view .hour-label {
-    position: absolute;
-    right: 8px;
-    top: -7px;
-    font-size: 11px;
-    color: #8e8e93;
-}
-
-.week-view .schedule-item {
-    position: absolute;
-    left: 1px;
-    right: 1px;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-size: 11px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    z-index: 10;
-}
-
-/* 添加新样式 */
-.week-view .day-column-content {
-    position: relative;
-    height: 1440px; /* 24小时 * 60px */
-}
-
-.week-view .time-column-content {
-    position: relative;
-    height: 1440px; /* 24小时 * 60px */
-}
-
-/* 月视图样式 */
-.schedule-list.month-view {
-    display: flex;
-    flex-direction: column;
-    height: 100%; /* 使用100%高度 */
-    overflow: hidden; /* 移除滚动 */
-}
-
-.month-view {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(6, 1fr); /* 6行，适应大多数月份 */
-    gap: 1px;
-    background-color: #e5e5ea;
-    flex: 1; /* 填充剩余空间 */
-}
-
-.month-view .day {
-    background-color: #fff;
-    padding: 5px;
-    position: relative;
-    transition: background-color 0.3s;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* 隐藏溢出内容 */
-}
-
-.month-view .day-header {
-    text-align: right;
-    font-size: 12px;
-    color: #8e8e93;
-    margin-bottom: 2px;
-}
-
-.month-view .schedule-item {
-    font-size: 9px;
-    padding: 1px 2px;
-    margin-bottom: 1px;
-    border-radius: 2px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-/* 移除滚动条相关样式 */
-.schedule-list.month-view::-webkit-scrollbar {
-    display: none;
-}
-
-/* 其他月视图样式保持不变 */
-
-.month-view .other-month {
-    background-color: #f9f9f9;
-}
-
-.month-view .current-day .day-header {
-    color: #007aff;
-    font-weight: bold;
-}
-
-.month-view .today {
-    background-color: #e4f1fe;
-}
-
-.month-view .today .day-header {
-    color: #007aff;
-    font-weight: bold;
-}
-
-/* 在现有样式的末尾添加以下内容 */
-
-.input-examples {
-    background-color: #f0f8ff;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.input-examples h3 {
+.modal h3 {
     margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 16px;
-    color: #007aff;
-}
-
-.input-examples ul {
-    margin: 0;
-    padding-left: 20px;
-}
-
-.input-examples li {
-    margin-bottom: 5px;
-    font-size: 14px;
     color: #333;
 }
 
-/* 调整聊天区域的样式以适应新的示例区域 */
-.chat {
-    display: flex;
-    flex-direction: column;
-}
-
-#chatBox {
-    flex: 1;
-    min-height: 200px; /* 确保聊天框有足够的高度 */
-    overflow-y: auto;
-    margin-bottom: 10px;
-    border: 1px solid #d2d2d7;
-    padding: 10px;
-    border-radius: 6px;
-}
-
-/* 在文件末尾添加以下样式 */
-
-.example-link {
-    color: #007aff;
-    text-decoration: none;
-    cursor: pointer;
-    transition: color 0.3s;
-}
-
-.example-link:hover {
-    color: #0056b3;
-    text-decoration: underline;
-}
-
-#jsonInput {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 8px;
-    border: 1px solid #d2d2d7;
-    border-radius: 6px;
-    font-size: 14px;
-    resize: vertical;
-}
-
-#addJsonSchedule {
-    width: 100%;
-    padding: 10px;
-    background-color: #007aff;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-#addJsonSchedule:hover {
-    background-color: #0056b3;
-}
-
-.confirm-dialog {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-}
-
-.confirm-dialog h3 {
-    margin-top: 0;
-    color: #007aff;
-}
-
-.dialog-buttons {
-    display: flex;
-    justify-content: flex-end;
+.modal-buttons {
+    text-align: right;
     margin-top: 20px;
 }
 
-.dialog-buttons button {
-    margin-left: 10px;
-    padding: 8px 16px;
+.btn-confirm, .btn-cancel {
+    padding: 10px 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: 5px;
     cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
 }
 
-#confirmTask {
-    background-color: #007aff;
+.btn-confirm {
+    background-color: #0071e3;
     color: white;
+    margin-left: 10px;
 }
 
-#cancelTask {
-    background-color: #f2f2f7;
-    color: #007aff;
-}
-
-.schedule-item {
-    position: absolute;
-    left: 70px; /* 调整左边距，为时间轴留出空间 */
-    right: 10px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
+.btn-cancel {
+    background-color: #e0e0e0;
     color: #333;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    z-index: 10;
 }
 
-.week-view .schedule-item {
-    left: 5px;
-    right: 5px;
+.btn-confirm:hover {
+    background-color: #005bbf;
 }
 
-.month-view .schedule-item {
-    position: relative;
-    left: 0;
-    right: 0;
-    margin-bottom: 2px;
-    font-size: 10px; /* 减小字体大小 */
-    padding: 2px 4px; /* 减小内边距 */
-}
-
-.schedule-time {
-    font-weight: bold;
-}
-
-.schedule-title {
-    margin-top: 2px;
-}
-
-/* 调整月视图中的日程项样式 */
-.month-view .schedule-item {
-    position: relative;
-    left: 0;
-    right: 0;
-    margin-bottom: 2px;
-    font-size: 10px; /* 减小字体大小 */
-    padding: 2px 4px; /* 减小内边距 */
-}
-
-.day-view, .week-view {
-    position: relative;
-}
-
-.day-view .hour, .week-view .hour {
-    height: 60px;
-    border-top: 1px solid #e5e5ea;
-    position: relative;
-}
-
-.week-view .day-column {
-    flex: 1;
-    border-right: 1px solid #e5e5ea;
-    position: relative;
-}
-
-.week-view .day-column:last-child {
-    border-right: none;
-}
-
-.schedule-item {
-    position: absolute;
-    left: 70px; /* 调整左边距，为时间轴留出空间 */
-    right: 10px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    color: #333;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    z-index: 10;
-}
-
-.week-view .schedule-item {
-    left: 5px;
-    right: 5px;
-}
-
-/* 添加新的样式用于时间轴容器 */
-.time-axis {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 60px;
-    height: 100%;
-    border-right: 1px solid #e5e5ea;
-    z-index: 1;
-}
-
-/* 修改小时标签样式 */
-.hour-label {
-    position: absolute;
-    left: 10px;
-    font-size: 12px;
-    color: #8e8e93;
-}
-
-/* 修改日程项样式 */
-.schedule-item {
-    position: absolute;
-    left: 70px; /* 调整左边距，为时间轴留出空间 */
-    right: 10px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    color: #333;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    z-index: 10;
-}
-
-/* 调整周视图时间列样式 */
-.week-view .time-column {
-    width: 60px;
-    border-right: 1px solid #e5e5ea;
-    font-size: 11px;
-    color: #8e8e93;
-    position: sticky;
-    left: 0;
-    background-color: #fff;
-    z-index: 2;
-    padding-top: 10px; /* 添加顶部内边距 */
-}
-
-.week-view .time-column .hour {
-    height: 60px;
-    position: relative;
-    text-align: right;
-    padding-right: 8px;
-    border-top: none;
-}
-
-.week-view .time-column .hour-label {
-    position: absolute;
-    right: 8px;
-    top: -6px; /* 稍微上移时间标签 */
-    font-size: 11px;
-    color: #8e8e93;
-}
-
-/* 调整周视图内容区域样式 */
-.week-view .week-content {
-    flex: 1;
-    display: flex;
-    overflow-y: auto;
-    border-top: 1px solid #e5e5ea; /* 添加顶部边框 */
-}
-
-.week-view .day-events {
-    flex: 1;
-    position: relative;
-    min-width: 100px;
-    border-right: 1px solid #e5e5ea;
-}
-
-.week-view .day-events:last-child {
-    border-right: none;
-}
-
-.week-view .day-column-content {
-    position: relative;
-    height: 1440px; /* 24小时 * 60px */
-}
-
-/* 调整周视图头部样式 */
-.week-view .week-header {
-    display: flex;
-    background-color: #f9f9f9;
-    border-bottom: 1px solid #e5e5ea;
-    padding-left: 60px; /* 为时间列留出空间 */
-}
-
-.week-view .day-column {
-    flex: 1;
-    text-align: center;
-    padding: 10px 5px;
-    font-weight: 500;
-    font-size: 13px;
-    color: #8e8e93;
-}
-
-/* 调整日程项样式 */
-.week-view .schedule-item {
-    position: absolute;
-    left: 0;
-    right: 0;
-    padding: 2px 4px;
-    margin: 0 2px;
-    border-radius: 4px;
-    font-size: 11px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    z-index: 10;
-}
-
-/* 确保滚动条出现在正确的位置 */
-.schedule-list.month-view {
-    overflow-y: auto;
-    max-height: calc(100vh - 100px); /* 调整高度，留出顶部导航的空间 */
-}
-
-.schedule-list.month-view::-webkit-scrollbar {
-    width: 8px;
-}
-
-.schedule-list.month-view::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.schedule-list.month-view::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
-}
-
-.schedule-list.month-view::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+.btn-cancel:hover {
+    background-color: #d0d0d0;
 }
