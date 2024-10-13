@@ -74,7 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
             title: '',
             start: null,
             end: null,
-            allDay: false
+            allDay: false,
+            recurrence: null // 新增字段用于存储重复频率
         };
 
         lines.forEach(line => {
@@ -92,6 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const durationInMinutes = unit === '小时' ? amount * 60 : amount;
                     taskInfo.end = new Date(taskInfo.start.getTime() + durationInMinutes * 60000);
                 }
+            } else if (line.startsWith('4. 重复频率：')) {
+                taskInfo.recurrence = line.substring('4. 重复频率：'.length).trim();
             }
         });
 
@@ -112,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <p><strong>标题:</strong> ${taskInfo.title}</p>
             <p><strong>开始时间:</strong> ${taskInfo.start ? taskInfo.start.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '未指定'}</p>
             <p><strong>结束时间:</strong> ${taskInfo.end ? taskInfo.end.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '未指定'}</p>
+            <p><strong>重复频率:</strong> ${taskInfo.recurrence || '不重复'}</p>
         `;
 
         modal.style.display = 'block';
@@ -145,13 +149,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addEventToCalendar(taskInfo) {
-        calendar.addEvent({
+        const eventData = {
             title: taskInfo.title,
             start: taskInfo.start,
             end: taskInfo.end,
             allDay: taskInfo.allDay
-        });
-        updateChat(`已添加任务：${taskInfo.title}`);
+        };
+
+        // 根据重复频率设置事件的重复规则
+        if (taskInfo.recurrence && taskInfo.recurrence !== '不重复') {
+            switch (taskInfo.recurrence) {
+                case '每天':
+                    eventData.rrule = {
+                        freq: 'daily',
+                        interval: 1
+                    };
+                    break;
+                case '每周':
+                    eventData.rrule = {
+                        freq: 'weekly',
+                        interval: 1
+                    };
+                    break;
+                case '每月':
+                    eventData.rrule = {
+                        freq: 'monthly',
+                        interval: 1
+                    };
+                    break;
+                case '每年':
+                    eventData.rrule = {
+                        freq: 'yearly',
+                        interval: 1
+                    };
+                    break;
+                // 可以根据需要添加更多的重复规则
+            }
+        }
+
+        calendar.addEvent(eventData);
+        updateChat(`已添加任务：${taskInfo.title}${taskInfo.recurrence !== '不重复' ? `（${taskInfo.recurrence}）` : ''}`);
     }
 
     function updateChat(message) {
@@ -214,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <p><strong>标题:</strong> ${event.title}</p>
             <p><strong>开始时间:</strong> ${event.start.toLocaleString()}</p>
             <p><strong>结束时间:</strong> ${event.end ? event.end.toLocaleString() : '未指定'}</p>
+            <p><strong>重复频率:</strong> ${event.rrule ? getRecurrenceText(event.rrule) : '不重复'}</p>
         `;
 
         modal.style.display = 'block';
@@ -234,6 +272,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 cancelBtn.textContent = '取消';
             }
         };
+    }
+
+    function getRecurrenceText(rrule) {
+        switch (rrule.freq) {
+            case 'daily':
+                return '每天';
+            case 'weekly':
+                return '每周';
+            case 'monthly':
+                return '每月';
+            case 'yearly':
+                return '每年';
+            default:
+                return '自定义';
+        }
     }
 
     // 添加输入样式模板功能

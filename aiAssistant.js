@@ -52,7 +52,7 @@ async function getWebsocketUrl() {
 // 处理用户输入并调用AI
 async function processUserInput(userInput) {
     const url = await getWebsocketUrl();
-    const currentDate = new Date().toISOString().split('T')[0]; // 获取当前日期
+    const currentDate = new Date().toISOString().split('T')[0];
     return new Promise((resolve, reject) => {
         const ws = new WebSocket(url);
         
@@ -74,16 +74,18 @@ async function processUserInput(userInput) {
                     message: {
                         text: [
                             { role: "system", content: 
-                                `你是一个任务提取助手。当前日期是 ${currentDate}。请从用户输入中提取出以下三个要点：` +
+                                `你是一个任务提取助手。当前日期是 ${currentDate}。请从用户输入中提取出以下四个要点：` +
                                 "1. 待办事项，" +
                                 "2. 开始时间（确保提取出明确的时间信息，如果是模糊的时间，如'今天'、'明天'或'下周'，请将其转换为具体的日期时间格式，格式为 YYYY-MM-DD HH:mm），" +
                                 "3. 预计时长（提取时间单位，如小时、分钟，如果用户未提供时长，可以尝试根据上下文推断出合适的时长）。" +
+                                "4. 重复频率（如果用户提到了重复的频率，如每天、每周、每月、每年等，请提取出来。如果没有提到，则标记为'不重复'）。" +
                                 "如果你无法提取某个信息，请用'未知'标识。" +
-                                "只输出这三个要点，不要有其他内容。" +
+                                "只输出这四个要点，不要有其他内容。" +
                                 "示例输出格式：" +
                                 "1. 待办事项：开会" +
                                 "2. 开始时间：2024-03-15 14:30" +
-                                "3. 预计时长：2小时" },
+                                "3. 预计时长：2小时" +
+                                "4. 重复频率：每周" },
                             { role: "user", content: userInput }
                         ]
                     }
