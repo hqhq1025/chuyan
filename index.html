@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/rrule@5.10.2/main.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -55,7 +56,8 @@
             <div class="modal-content">
                 <h3>上传课程表</h3>
                 <p>请选择您的课程表 XLS 文件：</p>
-                <input type="file" id="xlsFileInput" accept=".xls,.xlsx">
+                <label for="xlsFileInput">选择课程表XLS文件：</label>
+                <input type="file" id="xlsFileInput" accept=".xls,.xlsx" aria-label="选择课程表XLS文件">
                 <div class="modal-buttons">
                     <button id="uploadFileBtn" class="btn-confirm">上传</button>
                     <button id="cancelUploadBtn" class="btn-cancel">取消</button>

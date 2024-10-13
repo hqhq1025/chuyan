@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         interval: 1
                     };
                     break;
-                // 可根据需要添加更多的���复规则
+                // 可根据需要添加更多的复规则
             }
         }
 
@@ -380,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
             now.setDate(date + 7);
         } else {
             // 尝试解析具体日期，如果失败则使用当前日期
-            const dateMatch = dateTimeStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+            const dateMatch = dateTimeStr.match(/(\d{4})年(\d{1,2})��(\d{1,2})日/);
             if (dateMatch) {
                 now.setFullYear(parseInt(dateMatch[1]));
                 now.setMonth(parseInt(dateMatch[2]) - 1);
@@ -430,14 +430,23 @@ document.addEventListener('DOMContentLoaded', () => {
         uploadModal.style.display = 'none';
     });
 
-    uploadFileBtn.addEventListener('click', () => {
+    uploadFileBtn.addEventListener('click', async () => {
         const file = xlsFileInput.files[0];
         if (file) {
-            // 这里添加处理文件的逻辑
-            console.log('文件已选择:', file.name);
-            // TODO: 添加文件解析和导入课程表的逻辑
-            alert('文件上传成功！'); // 临时使用 alert，之后可以替换为更友好的提示
-            uploadModal.style.display = 'none';
+            try {
+                const jsonData = await parseXLSFile(file);
+                const courses = extractCourses(jsonData);
+                const calendarEvents = convertToCalendarEvents(courses);
+                
+                // 显示解析结果
+                const resultText = JSON.stringify(calendarEvents, null, 2);
+                showCustomPrompt('解析结果', `<pre>${resultText}</pre>`, () => {
+                    uploadModal.style.display = 'none';
+                });
+            } catch (error) {
+                console.error('文件解析错误:', error);
+                alert('文件解析失败，请确保文件格式正确。');
+            }
         } else {
             alert('请选择一个文件');
         }
@@ -451,4 +460,89 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 为了调试，添加一个控制台日志
     console.log('script.js 已加载');
+
+    // 在文件末尾添加以下函数
+
+    function parseXLSFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                resolve(jsonData);
+            };
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function extractCourses(jsonData) {
+        const courses = [];
+        // 假设第一行是表头，从第二行开始解析
+        for (let i = 1; i < jsonData.length; i++) {
+            const row = jsonData[i];
+            if (row.length >= 5) { // 确保行有足够的列
+                courses.push({
+                    name: row[0],
+                    day: row[1],
+                    startTime: row[2],
+                    endTime: row[3],
+                    location: row[4]
+                });
+            }
+        }
+        return courses;
+    }
+
+    function convertToCalendarEvents(courses) {
+        const daysOfWeek = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        return courses.map(course => {
+            const dayIndex = daysOfWeek.indexOf(course.day);
+            const today = new Date();
+            const courseDate = new Date(today.setDate(today.getDate() - today.getDay() + dayIndex));
+            
+            return {
+                title: course.name,
+                start: `${courseDate.toISOString().split('T')[0]}T${course.startTime}:00`,
+                end: `${courseDate.toISOString().split('T')[0]}T${course.endTime}:00`,
+                location: course.location,
+                rrule: {
+                    freq: 'weekly',
+                    interval: 1,
+                    byweekday: [dayIndex]
+                }
+            };
+        });
+    }
+
+    // 修改showCustomPrompt函数以支持HTML内容
+    function showCustomPrompt(title, message, callback, defaultValue = '') {
+        const modal = document.getElementById('customModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const confirmBtn = document.getElementById('modalConfirm');
+        const cancelBtn = document.getElementById('modalCancel');
+
+        modalTitle.textContent = title;
+        modalBody.innerHTML = message;
+
+        modal.style.display = 'block';
+
+        confirmBtn.onclick = function() {
+            modal.style.display = 'none';
+            callback(null);
+        };
+
+        cancelBtn.style.display = 'none';
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+                callback(null);
+            }
+        };
+    }
 });
