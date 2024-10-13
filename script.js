@@ -96,9 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const schedules = [];
             let reminders = [];
 
-            for (const key in jsonResponse) {
-                if (key.startsWith('日程')) {
-                    const event = jsonResponse[key];
+            if (jsonResponse.日程 && Array.isArray(jsonResponse.日程)) {
+                jsonResponse.日程.forEach(event => {
                     const startTime = parseChineseDateTime(event.开始时间);
                     if (startTime) {
                         schedules.push({
@@ -111,12 +110,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             isReminder: false
                         });
                     }
-                } else if (key === '提醒事项') {
-                    if (typeof jsonResponse.提醒事项 === 'string') {
-                        reminders = [jsonResponse.提醒事项];
-                    } else if (Array.isArray(jsonResponse.提醒事项)) {
-                        reminders = jsonResponse.提醒事项;
-                    }
+                });
+            }
+
+            if (jsonResponse.提醒事项) {
+                if (typeof jsonResponse.提醒事项 === 'string') {
+                    reminders = [jsonResponse.提醒事项];
+                } else if (Array.isArray(jsonResponse.提醒事项)) {
+                    reminders = jsonResponse.提醒事项;
                 }
             }
 
@@ -543,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function convertToCalendarEvents(courses) {
-        const daysOfWeek = ['周日', '周���', '周二', '周三', '周四', '周五', '周六'];
+        const daysOfWeek = ['周日', '周', '周二', '周三', '周四', '周五', '周六'];
         return courses.map(course => {
             const dayIndex = daysOfWeek.indexOf(course.day);
             const today = new Date();
