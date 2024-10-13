@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (schedules.length > 0) {
                     const selectedSchedules = await showConfirmDialog(schedules);
+                    console.log('Selected schedules:', selectedSchedules);  // 添加这行日志
                     for (const taskInfo of selectedSchedules) {
                         taskInfo.originalInput = input;
                         addEventToCalendar(taskInfo);
@@ -117,15 +118,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (jsonResponse.日程) {
             jsonResponse.日程.forEach(event => {
-                schedules.push({
-                    title: event.待办事项,
-                    start: parseChineseDateTime(event.开始时间),
-                    end: event.预计时长 !== '未知' ? calculateEndTime(parseChineseDateTime(event.开始时间), event.预计时长) : null,
-                    allDay: false,
-                    recurrence: event.重复频率,
-                    notes: event.备注,
-                    isReminder: false
-                });
+                const startDate = parseChineseDateTime(event.开始时间);
+                if (startDate) {
+                    schedules.push({
+                        title: event.待办事项,
+                        start: startDate,
+                        end: event.预计时长 !== '未知' ? calculateEndTime(startDate, event.预计时长) : null,
+                        allDay: false,
+                        recurrence: event.重复频率,
+                        notes: event.备注,
+                        isReminder: false
+                    });
+                } else {
+                    console.error('无法解析日期时间:', event.开始时间);
+                }
             });
         }
 
@@ -197,32 +203,43 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = new Date(referenceDate);
         const currentYear = referenceDate.getFullYear();
 
-        // 解析日期
-        const dateMatch = dateTimeStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-        if (dateMatch) {
-            result.setFullYear(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
+        // 处理相对日期
+        if (dateTimeStr.includes('今天')) {
+            // 保持当前日期不变
+        } else if (dateTimeStr.includes('明天')) {
+            result.setDate(result.getDate() + 1);
+        } else if (dateTimeStr.includes('后天')) {
+            result.setDate(result.getDate() + 2);
+        } else if (dateTimeStr.includes('下周')) {
+            result.setDate(result.getDate() + 7);
         } else {
-            // 如果没有找到完整的日期，尝试解析年月日
-            const yearMatch = dateTimeStr.match(/(\d{4})年/);
-            const monthMatch = dateTimeStr.match(/(\d{1,2})月/);
-            const dayMatch = dateTimeStr.match(/(\d{1,2})[日号]/);
-
-            if (yearMatch) result.setFullYear(parseInt(yearMatch[1]));
-            if (monthMatch) result.setMonth(parseInt(monthMatch[1]) - 1);
-            if (dayMatch) result.setDate(parseInt(dayMatch[1]));
+            // 解析具体日期
+            const dateMatch = dateTimeStr.match(/(\d{4}年)?(\d{1,2})月(\d{1,2})[日号]/);
+            if (dateMatch) {
+                const year = dateMatch[1] ? parseInt(dateMatch[1]) : currentYear;
+                const month = parseInt(dateMatch[2]) - 1; // JavaScript中月份是0-11
+                const day = parseInt(dateMatch[3]);
+                result.setFullYear(year, month, day);
+            }
         }
 
         // 解析时间
-        const timeMatch = dateTimeStr.match(/(\d{1,2})([:：](\d{2}))?\s*(上午|下午|晚上)?/);
+        const timeMatch = dateTimeStr.match(/(\d{1,2})([:：](\d{2}))?\s*(上午|下午|晚上|凌晨)?/);
         if (timeMatch) {
             let hours = parseInt(timeMatch[1]);
             const minutes = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
             const period = timeMatch[4];
 
-            if (period === '下午' || period === '晚上' || (period === undefined && hours < 12 && hours !== 0)) {
+            if (period === '下午' && hours < 12) {
+                hours += 12;
+            } else if (period === '晚上') {
+                hours = hours === 12 ? 0 : hours + 12;
+            } else if (period === '凌晨' && hours === 12) {
+                hours = 0;
+            } else if (!period && hours < 12 && hours !== 0) {
+                // 如果没有指定上午/下午，默认下午
                 hours += 12;
             }
-            if (hours === 24) hours = 0;
 
             result.setHours(hours, minutes, 0, 0);
         } else {
@@ -320,7 +337,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 修改 addEventToCalendar 函数
     function addEventToCalendar(taskInfo) {
-        console.log('Adding event to calendar:', taskInfo);  // 添加日志
+        console.log('Adding event to calendar:', taskInfo);
+
+        if (!taskInfo.start) {
+            console.error('无效的开始时间:', taskInfo);
+            updateChat(`添加日程失败：${taskInfo.title} - 无效的开始时间`);
+            return;
+        }
 
         const eventData = {
             title: taskInfo.title,
@@ -343,10 +366,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const addedEvent = calendar.addEvent(eventData);
-            console.log('Event added successfully:', addedEvent);  // 添加日志
+            console.log('Event added successfully:', addedEvent);
             updateChat(`已添加${taskInfo.isReminder ? '提醒' : '日程'}：${taskInfo.title}`);
         } catch (error) {
-            console.error('Failed to add event:', error);  // 添加错误日志
+            console.error('Failed to add event:', error);
             updateChat(`添加${taskInfo.isReminder ? '提醒' : '日程'}失败：${taskInfo.title}`);
         }
     }
@@ -488,93 +511,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 文件末尾添加以下函数
-    function showCustomPrompt(title, message, callback, defaultValue = '') {
-        const modal = document.getElementById('customModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalBody = document.getElementById('modalBody');
-        const confirmBtn = document.getElementById('modalConfirm');
-        const cancelBtn = document.getElementById('modalCancel');
-
-        modalTitle.textContent = title;
-        modalBody.innerHTML = `
-            <p>${message}</p>
-            <input type="text" id="customPromptInput" value="${defaultValue}">
-        `;
-
-        modal.style.display = 'block';
-
-        confirmBtn.onclick = function() {
-            const input = document.getElementById('customPromptInput').value;
-            modal.style.display = 'none';
-            callback(input);
-        };
-
-        cancelBtn.onclick = function() {
-            modal.style.display = 'none';
-            callback(null);
-        };
-
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = 'none';
-                callback(null);
-            }
-        };
-    }
-
-    // 确保 aiAssistant.js 中的函数可用
-    if (typeof window.processUserInput === 'undefined') {
-        console.error('AI 助能未正确加载。请确保 aiAssistant.js 文件已确引入并且有语法错误。');
-    } else {
-        console.log('AI 助手功能已正确加载。');
-    }
-
-    const addCourseScheduleBtn = document.getElementById('addCourseScheduleBtn');
-    const uploadModal = document.getElementById('uploadModal');
-    const xlsFileInput = document.getElementById('xlsFileInput');
-    const uploadFileBtn = document.getElementById('uploadFileBtn');
-    const cancelUploadBtn = document.getElementById('cancelUploadBtn');
-
-    addCourseScheduleBtn.addEventListener('click', () => {
-        uploadModal.style.display = 'block';
-    });
-
-    cancelUploadBtn.addEventListener('click', () => {
-        uploadModal.style.display = 'none';
-    });
-
-    uploadFileBtn.addEventListener('click', async () => {
-        const file = xlsFileInput.files[0];
-        if (file) {
-            try {
-                const jsonData = await parseXLSFile(file);
-                const courses = extractCourses(jsonData);
-                const calendarEvents = convertToCalendarEvents(courses);
-                
-                // 显示解析结果
-                const resultText = JSON.stringify(calendarEvents, null, 2);
-                showCustomPrompt('解析结果', `<pre>${resultText}</pre>`, () => {
-                    uploadModal.style.display = 'none';
-                });
-            } catch (error) {
-                console.error('文件解析错误:', error);
-                alert('文件解析失败，请确保文件格式正确。');
-            }
-        } else {
-            alert('请选择一个文件');
-        }
-    });
-
-    window.onclick = function(event) {
-        if (event.target == uploadModal) {
-            uploadModal.style.display = 'none';
-        }
-    };
-
-    // 为了调试，添加一个控制台日志
-    console.log('script.js 已加载');
-
-    // 在文件末尾添加以下函数
 
     function parseXLSFile(file) {
         return new Promise((resolve, reject) => {
