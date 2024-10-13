@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error('处理输入时出错:', error);
-                updateChat(`处理输入��出错: ${error.message}`);
+                updateChat(`处理输入出错: ${error.message}`);
             }
             userInput.value = '';
         }
