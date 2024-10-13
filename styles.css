@@ -178,3 +178,22 @@ h2 {
 .btn-cancel:hover {
     background-color: #d0d0d0;
 }
+
+/* 新添加的样式 */
+.original-input-container {
+    margin-top: 15px;
+}
+
+#toggleOriginalInput {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+#originalInputText {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+}

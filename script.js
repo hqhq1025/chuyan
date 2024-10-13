@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const aiResponse = await callAI(input);
                 updateChat(`AI回复: ${aiResponse}`);
                 const taskInfo = parseAIResponse(aiResponse);
+                taskInfo.originalInput = input; // 添加原始输入到taskInfo
                 if (taskInfo.title && taskInfo.start) {
                     showConfirmDialog(taskInfo);
                 } else {
@@ -152,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // 修改 addEventToCalendar 函数
     function addEventToCalendar(taskInfo) {
         const eventData = {
             title: taskInfo.title,
@@ -159,7 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
             end: taskInfo.end,
             allDay: taskInfo.allDay,
             extendedProps: {
-                notes: taskInfo.notes // 添加备注信息
+                notes: taskInfo.notes,
+                originalInput: taskInfo.originalInput // 添加原始输入
             }
         };
 
@@ -246,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // 修改 showEventDetails 函数
     function showEventDetails(event) {
         const modal = document.getElementById('customModal');
         const modalTitle = document.getElementById('modalTitle');
@@ -260,7 +264,26 @@ document.addEventListener('DOMContentLoaded', () => {
             <p><strong>结束时间:</strong> ${event.end ? event.end.toLocaleString() : '未指定'}</p>
             <p><strong>重复频率:</strong> ${event.rrule ? getRecurrenceText(event.rrule) : '不重复'}</p>
             <p><strong>备注:</strong> ${event.extendedProps.notes || '无'}</p>
+            <div class="original-input-container">
+                <button id="toggleOriginalInput">显示原始输入</button>
+                <div id="originalInputText" style="display: none;">
+                    <p><strong>原始输入:</strong> ${event.extendedProps.originalInput || '无'}</p>
+                </div>
+            </div>
         `;
+
+        const toggleBtn = modalBody.querySelector('#toggleOriginalInput');
+        const originalInputText = modalBody.querySelector('#originalInputText');
+
+        toggleBtn.addEventListener('click', function() {
+            if (originalInputText.style.display === 'none') {
+                originalInputText.style.display = 'block';
+                toggleBtn.textContent = '隐藏原始输入';
+            } else {
+                originalInputText.style.display = 'none';
+                toggleBtn.textContent = '显示原始输入';
+            }
+        });
 
         modal.style.display = 'block';
 
@@ -386,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 确保 aiAssistant.js 中的函数可用
     if (typeof window.processUserInput === 'undefined') {
-        console.error('AI 助�����能未正确加载。请确保 aiAssistant.js 文件已正确引入并且没有语法错误。');
+        console.error('AI 助能未正确加载。请确保 aiAssistant.js 文件已正确引入并且没有语法错误。');
     } else {
         console.log('AI 助手功能已正确加载。');
     }
