@@ -260,3 +260,24 @@ h2 {
 .add-course-schedule-btn:hover {
     background-color: #005bbf;
 }
+
+/* 在文件末尾添加以下样式 */
+
+#uploadModal .modal-content {
+    max-width: 400px;
+}
+
+#xlsFileInput {
+    margin: 20px 0;
+    width: 100%;
+}
+
+#uploadModal .modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+#uploadModal .modal-buttons button {
+    margin-left: 10px;
+}

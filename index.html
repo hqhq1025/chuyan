@@ -50,6 +50,18 @@
                 </div>
             </div>
         </div>
+        <!-- 添加新的模态框用于文件上传 -->
+        <div id="uploadModal" class="modal">
+            <div class="modal-content">
+                <h3>上传课程表</h3>
+                <p>请选择您的课程表 XLS 文件：</p>
+                <input type="file" id="xlsFileInput" accept=".xls,.xlsx">
+                <div class="modal-buttons">
+                    <button id="uploadFileBtn" class="btn-confirm">上传</button>
+                    <button id="cancelUploadBtn" class="btn-cancel">取消</button>
+                </div>
+            </div>
+        </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="aiAssistant.js"></script>

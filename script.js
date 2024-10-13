@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         interval: 1
                     };
                     break;
-                // 可根据需要添加更多的重复规则
+                // 可根据需要添加更多的���复规则
             }
         }
 
@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTitle.textContent = '事件详情';
         modalBody.innerHTML = `
             <p><strong>标题:</strong> ${event.title}</p>
-            <p><strong>���始时间:</strong> ${event.start.toLocaleString()}</p>
+            <p><strong>始时间:</strong> ${event.start.toLocaleString()}</p>
             <p><strong>结束时间:</strong> ${event.end ? event.end.toLocaleString() : '未指定'}</p>
             <p><strong>重复频率:</strong> ${event.rrule ? getRecurrenceText(event.rrule) : '不重复'}</p>
             <p><strong>备注:</strong> ${event.extendedProps.notes || '无'}</p>
@@ -417,12 +417,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const addCourseScheduleBtn = document.getElementById('addCourseScheduleBtn');
-    addCourseScheduleBtn.addEventListener('click', () => {
-        // 在这里添加打开添加课程表页面或模态框的逻辑
-        console.log('添加课程表按钮被点击');
-        // 例如：window.location.href = 'add_course_schedule.html';
-    });
-});
+    const uploadModal = document.getElementById('uploadModal');
+    const xlsFileInput = document.getElementById('xlsFileInput');
+    const uploadFileBtn = document.getElementById('uploadFileBtn');
+    const cancelUploadBtn = document.getElementById('cancelUploadBtn');
 
-// 为了调试，添加一个控制台日志
-console.log('script.js 已加载');
+    addCourseScheduleBtn.addEventListener('click', () => {
+        uploadModal.style.display = 'block';
+    });
+
+    cancelUploadBtn.addEventListener('click', () => {
+        uploadModal.style.display = 'none';
+    });
+
+    uploadFileBtn.addEventListener('click', () => {
+        const file = xlsFileInput.files[0];
+        if (file) {
+            // 这里添加处理文件的逻辑
+            console.log('文件已选择:', file.name);
+            // TODO: 添加文件解析和导入课程表的逻辑
+            alert('文件上传成功！'); // 临时使用 alert，之后可以替换为更友好的提示
+            uploadModal.style.display = 'none';
+        } else {
+            alert('请选择一个文件');
+        }
+    });
+
+    window.onclick = function(event) {
+        if (event.target == uploadModal) {
+            uploadModal.style.display = 'none';
+        }
+    };
+
+    // 为了调试，添加一个控制台日志
+    console.log('script.js 已加载');
+});
