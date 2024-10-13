@@ -58,12 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { schedules, reminders } = parseAIResponse(aiResponse);
                 
                 if (schedules.length > 0) {
-                    for (const taskInfo of schedules) {
+                    const selectedSchedules = await showConfirmDialog(schedules);
+                    for (const taskInfo of selectedSchedules) {
                         taskInfo.originalInput = input;
-                        const shouldAdd = await showConfirmDialog(taskInfo);
-                        if (shouldAdd) {
-                            addEventToCalendar(taskInfo);
-                        }
+                        addEventToCalendar(taskInfo);
                     }
                 } else {
                     updateChat('无法从AI回复中提取完整的任务信息，请尝试更明确的表述。');
@@ -98,35 +96,43 @@ document.addEventListener('DOMContentLoaded', () => {
             const schedules = [];
             let reminders = [];
 
-            // 处理日程
             for (const key in jsonResponse) {
                 if (key.startsWith('日程')) {
                     const event = jsonResponse[key];
-                    const schedule = {
-                        title: event.待办事项,
-                        start: parseChineseDateTime(event.开始时间),
-                        end: null,
-                        allDay: false,
-                        recurrence: event.重复频率,
-                        notes: event.备注
-                    };
-                    
-                    if (event.预计时长 && event.预计时长 !== '未知') {
-                        schedule.end = calculateEndTime(schedule.start, event.预计时长);
+                    const startTime = parseChineseDateTime(event.开始时间);
+                    if (startTime) {
+                        schedules.push({
+                            title: event.待办事项 || '未知事项',
+                            start: startTime,
+                            end: event.预计时长 !== '未知' ? calculateEndTime(startTime, event.预计时长) : null,
+                            allDay: false,
+                            recurrence: event.重复频率 || '不重复',
+                            notes: event.备注 || '',
+                            isReminder: false
+                        });
                     }
-
-                    schedules.push(schedule);
+                } else if (key === '提醒事项') {
+                    if (typeof jsonResponse.提醒事项 === 'string') {
+                        reminders = [jsonResponse.提醒事项];
+                    } else if (Array.isArray(jsonResponse.提醒事项)) {
+                        reminders = jsonResponse.提醒事项;
+                    }
                 }
             }
 
-            // 处理提醒事项（如果有的话）
-            if (jsonResponse.提醒事项) {
-                if (typeof jsonResponse.提醒事项 === 'string') {
-                    reminders = [jsonResponse.提醒事项];
-                } else if (Array.isArray(jsonResponse.提醒事项)) {
-                    reminders = jsonResponse.提醒事项;
-                }
-            }
+            // 将提醒事项也添加到日程中
+            reminders.forEach(reminder => {
+                const reminderDate = parseChineseDateTime(reminder) || new Date();
+                schedules.push({
+                    title: reminder,
+                    start: reminderDate,
+                    end: null,
+                    allDay: true,
+                    recurrence: '不重复',
+                    notes: '提醒事项',
+                    isReminder: true
+                });
+            });
 
             return { schedules, reminders };
         } catch (error) {
@@ -137,6 +143,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 修改 parseChineseDateTime 函数
     function parseChineseDateTime(dateTimeStr, referenceDate = new Date()) {
+        if (!dateTimeStr) {
+            console.warn('日期时间字符串为空');
+            return null;
+        }
+
         const result = new Date(referenceDate);
         const currentYear = referenceDate.getFullYear();
 
@@ -144,12 +155,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const dateMatch = dateTimeStr.match(/(\d{4})-(\d{2})-(\d{2})/);
         if (dateMatch) {
             result.setFullYear(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
+        } else {
+            // 如果没有找到完整的日期，尝试解析年月日
+            const yearMatch = dateTimeStr.match(/(\d{4})年/);
+            const monthMatch = dateTimeStr.match(/(\d{1,2})月/);
+            const dayMatch = dateTimeStr.match(/(\d{1,2})[日号]/);
+
+            if (yearMatch) result.setFullYear(parseInt(yearMatch[1]));
+            if (monthMatch) result.setMonth(parseInt(monthMatch[1]) - 1);
+            if (dayMatch) result.setDate(parseInt(dayMatch[1]));
         }
 
         // 解析时间
-        const timeMatch = dateTimeStr.match(/(\d{2}):(\d{2})/);
+        const timeMatch = dateTimeStr.match(/(\d{1,2})([:：](\d{2}))?\s*(上午|下午|晚上)?/);
         if (timeMatch) {
-            result.setHours(parseInt(timeMatch[1]), parseInt(timeMatch[2]), 0, 0);
+            let hours = parseInt(timeMatch[1]);
+            const minutes = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
+            const period = timeMatch[4];
+
+            if (period === '下午' || period === '晚上' || (period === undefined && hours < 12 && hours !== 0)) {
+                hours += 12;
+            }
+            if (hours === 24) hours = 0;
+
+            result.setHours(hours, minutes, 0, 0);
+        } else {
+            // 如果没有指定时间，默认设置为当天的上午9点
+            result.setHours(9, 0, 0, 0);
         }
 
         return result;
@@ -168,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 修改 showConfirmDialog 函数
-    async function showConfirmDialog(taskInfo) {
+    async function showConfirmDialog(schedules) {
         return new Promise((resolve) => {
             const modal = document.getElementById('customModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -177,30 +209,50 @@ document.addEventListener('DOMContentLoaded', () => {
             const cancelBtn = document.getElementById('modalCancel');
 
             modalTitle.textContent = '确认添加任务';
-            modalBody.innerHTML = `
-                <p><strong>标题:</strong> ${taskInfo.title}</p>
-                <p><strong>开始时间:</strong> ${taskInfo.start ? taskInfo.start.toLocaleString() : '未指定'}</p>
-                <p><strong>结束时间:</strong> ${taskInfo.end ? taskInfo.end.toLocaleString() : '未指定'}</p>
-                <p><strong>重复频率:</strong> ${taskInfo.recurrence || '不重复'}</p>
-                <p><strong>备注:</strong> ${taskInfo.notes || '无'}</p>
-            `;
+            
+            let bodyContent = '<div style="max-height: 400px; overflow-y: auto;">';
+            schedules.forEach((taskInfo, index) => {
+                bodyContent += `
+                    <div style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
+                        <h3>${taskInfo.isReminder ? '提醒事项' : '日程'} ${index + 1}</h3>
+                        <p><strong>标题:</strong> ${taskInfo.title}</p>
+                        <p><strong>开始时间:</strong> ${taskInfo.start ? taskInfo.start.toLocaleString() : '未指定'}</p>
+                        <p><strong>结束时间:</strong> ${taskInfo.end ? taskInfo.end.toLocaleString() : '未指定'}</p>
+                        <p><strong>重复频率:</strong> ${taskInfo.recurrence}</p>
+                        <p><strong>备注:</strong> ${taskInfo.notes}</p>
+                        <label>
+                            <input type="checkbox" class="schedule-checkbox" checked> 添加此${taskInfo.isReminder ? '提醒' : '日程'}
+                        </label>
+                    </div>
+                `;
+            });
+            bodyContent += '</div>';
+            
+            modalBody.innerHTML = bodyContent;
 
             modal.style.display = 'block';
 
             confirmBtn.onclick = function() {
+                const selectedSchedules = [];
+                const checkboxes = modalBody.querySelectorAll('.schedule-checkbox');
+                checkboxes.forEach((checkbox, index) => {
+                    if (checkbox.checked) {
+                        selectedSchedules.push(schedules[index]);
+                    }
+                });
                 modal.style.display = 'none';
-                resolve(true);
+                resolve(selectedSchedules);
             };
 
             cancelBtn.onclick = function() {
                 modal.style.display = 'none';
-                resolve(false);
+                resolve([]);
             };
 
             window.onclick = function(event) {
                 if (event.target == modal) {
                     modal.style.display = 'none';
-                    resolve(false);
+                    resolve([]);
                 }
             };
         });
@@ -215,43 +267,30 @@ document.addEventListener('DOMContentLoaded', () => {
             allDay: taskInfo.allDay,
             extendedProps: {
                 notes: taskInfo.notes,
-                originalInput: taskInfo.originalInput // 添加原始输入
+                originalInput: taskInfo.originalInput,
+                isReminder: taskInfo.isReminder
             }
         };
 
-        // 根据重复频率设置事件的重复规则
         if (taskInfo.recurrence && taskInfo.recurrence !== '不重复') {
-            switch (taskInfo.recurrence) {
-                case '每天':
-                    eventData.rrule = {
-                        freq: 'daily',
-                        interval: 1
-                    };
-                    break;
-                case '每周':
-                    eventData.rrule = {
-                        freq: 'weekly',
-                        interval: 1
-                    };
-                    break;
-                case '每月':
-                    eventData.rrule = {
-                        freq: 'monthly',
-                        interval: 1
-                    };
-                    break;
-                case '每年':
-                    eventData.rrule = {
-                        freq: 'yearly',
-                        interval: 1
-                    };
-                    break;
-                // 可根据需要添加更多的复规则
-            }
+            eventData.rrule = {
+                freq: getFrequency(taskInfo.recurrence),
+                dtstart: taskInfo.start
+            };
         }
 
         calendar.addEvent(eventData);
-        updateChat(`已添加任务：${taskInfo.title}${taskInfo.recurrence !== '不重复' ? `（${taskInfo.recurrence}）` : ''}`);
+        updateChat(`已添加${taskInfo.isReminder ? '提醒' : '日程'}：${taskInfo.title}`);
+    }
+
+    function getFrequency(recurrence) {
+        switch (recurrence.toLowerCase()) {
+            case '每天': return 'daily';
+            case '每周': return 'weekly';
+            case '每月': return 'monthly';
+            case '每年': return 'yearly';
+            default: return 'daily';
+        }
     }
 
     function updateChat(message) {
@@ -417,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 确保 aiAssistant.js 中的函数可用
     if (typeof window.processUserInput === 'undefined') {
-        console.error('AI 助能未正确加载。请确保 aiAssistant.js 文件已���确引入并且���有语法错误。');
+        console.error('AI 助能未正确加载。请确保 aiAssistant.js 文件已确引入并且有语法错误。');
     } else {
         console.log('AI 助手功能已正确加载。');
     }
@@ -504,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function convertToCalendarEvents(courses) {
-        const daysOfWeek = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        const daysOfWeek = ['周日', '周���', '周二', '周三', '周四', '周五', '周六'];
         return courses.map(course => {
             const dayIndex = daysOfWeek.indexOf(course.day);
             const today = new Date();
@@ -575,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return taskInfo;
     }
 
-    // 解析相对日期
+    // 解析对日期
     function parseRelativeDate(input) {
         const today = new Date(notificationDate);
         if (input.includes('明天')) {
