@@ -1,8 +1,25 @@
-// 配置信息
-const APPID = '7f74c9fd';
-const APISecret = 'YmMxMmYzMmQ3NzYzNjc4ZDJiNjA3ZTc1';
-const APIKey = 'ae73f23b9eaa1c164fa2b52d923c5fc1';
+// 加密的配置信息
+const encryptedConfig = {
+    APPID: 'N2Y3NGM5ZmQ=',
+    APISecret: 'WW1NeE1tWXpNbVEzTnpZek5qYzRaREppTmpBM1pUYzE=',
+    APIKey: 'YWU3M2YyM2I5ZWFhMWMxNjRmYTJiNTJkOTIzYzVmYzE='
+};
+
 const SPARK_URL = 'wss://spark-api.xf-yun.com/v3.5/chat';
+
+// 解密函数
+function decrypt(encrypted) {
+    return atob(encrypted);
+}
+
+// 获取解密后的配置
+function getConfig() {
+    return {
+        APPID: decrypt(encryptedConfig.APPID),
+        APISecret: decrypt(encryptedConfig.APISecret),
+        APIKey: decrypt(encryptedConfig.APIKey)
+    };
+}
 
 // 确保CryptoJS已加载
 function ensureCryptoJSLoaded() {
@@ -22,11 +39,12 @@ function ensureCryptoJSLoaded() {
 // 生成鉴权url
 async function getWebsocketUrl() {
     await ensureCryptoJSLoaded();
+    const config = getConfig();
     const date = new Date().toUTCString();
     const signatureOrigin = `host: spark-api.xf-yun.com\ndate: ${date}\nGET /v3.5/chat HTTP/1.1`;
-    const signatureSha = CryptoJS.HmacSHA256(signatureOrigin, APISecret);
+    const signatureSha = CryptoJS.HmacSHA256(signatureOrigin, config.APISecret);
     const signature = CryptoJS.enc.Base64.stringify(signatureSha);
-    const authorizationOrigin = `api_key="${APIKey}", algorithm="hmac-sha256", headers="host date request-line", signature="${signature}"`;
+    const authorizationOrigin = `api_key="${config.APIKey}", algorithm="hmac-sha256", headers="host date request-line", signature="${signature}"`;
     const authorization = btoa(authorizationOrigin);
     return `${SPARK_URL}?authorization=${encodeURIComponent(authorization)}&date=${encodeURIComponent(date)}&host=spark-api.xf-yun.com`;
 }
@@ -40,9 +58,10 @@ async function processUserInput(userInput) {
         
         ws.onopen = () => {
             console.log("WebSocket连接已建立");
+            const config = getConfig();
             const params = {
                 header: {
-                    app_id: APPID
+                    app_id: config.APPID
                 },
                 parameter: {
                     chat: {
