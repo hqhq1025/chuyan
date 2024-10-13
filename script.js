@@ -59,16 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateChat(`AI回复: ${aiResponse}`);
                 const { schedules, reminders } = parseAIResponse(aiResponse);
                 
-                console.log('Parsed schedules:', schedules);  // 添加这行日志
-                console.log('Parsed reminders:', reminders);  // 添加这行日志
+                console.log('Parsed schedules:', schedules);
+                console.log('Parsed reminders:', reminders);
 
                 if (schedules.length > 0) {
                     const selectedSchedules = await showConfirmDialog(schedules);
-                    console.log('Selected schedules:', selectedSchedules);  // 添加这行日志
-                    for (const taskInfo of selectedSchedules) {
-                        taskInfo.originalInput = input;
-                        addEventToCalendar(taskInfo);
-                    }
+                    console.log('Selected schedules:', selectedSchedules);
                 } else {
                     updateChat('无法从AI回复中提取完整的任务信息，请尝试更明确的表述。');
                 }
@@ -247,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 修改 showConfirmDialog 函数
     async function showConfirmDialog(schedules) {
-        console.log('Schedules to confirm:', schedules);  // 添加这行日志
+        console.log('Schedules to confirm:', schedules);
         return new Promise((resolve) => {
             const modal = document.getElementById('customModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -288,12 +284,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
                 modal.style.display = 'none';
-                resolve(selectedSchedules);
-
-                // 直接在这里添加事件到日历
+                
+                // 在这里添加事件到日历
                 selectedSchedules.forEach(taskInfo => {
                     addEventToCalendar(taskInfo);
                 });
+                
+                resolve(selectedSchedules);
             };
 
             cancelBtn.onclick = function() {
