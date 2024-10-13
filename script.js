@@ -75,7 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
             start: null,
             end: null,
             allDay: false,
-            recurrence: null // 新增字段用于存储重复频率
+            recurrence: null,
+            notes: '' // 新增字段用于存储备注信息
         };
 
         lines.forEach(line => {
@@ -95,6 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (line.startsWith('4. 重复频率：')) {
                 taskInfo.recurrence = line.substring('4. 重复频率：'.length).trim();
+            } else if (line.startsWith('5. 备注：')) {
+                taskInfo.notes = line.substring('5. 备注：'.length).trim();
             }
         });
 
@@ -116,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <p><strong>开始时间:</strong> ${taskInfo.start ? taskInfo.start.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '未指定'}</p>
             <p><strong>结束时间:</strong> ${taskInfo.end ? taskInfo.end.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '未指定'}</p>
             <p><strong>重复频率:</strong> ${taskInfo.recurrence || '不重复'}</p>
+            <p><strong>备注:</strong> ${taskInfo.notes || '无'}</p>
         `;
 
         modal.style.display = 'block';
@@ -153,7 +157,10 @@ document.addEventListener('DOMContentLoaded', () => {
             title: taskInfo.title,
             start: taskInfo.start,
             end: taskInfo.end,
-            allDay: taskInfo.allDay
+            allDay: taskInfo.allDay,
+            extendedProps: {
+                notes: taskInfo.notes // 添加备注信息
+            }
         };
 
         // 根据重复频率设置事件的重复规则
@@ -252,6 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <p><strong>开始时间:</strong> ${event.start.toLocaleString()}</p>
             <p><strong>结束时间:</strong> ${event.end ? event.end.toLocaleString() : '未指定'}</p>
             <p><strong>重复频率:</strong> ${event.rrule ? getRecurrenceText(event.rrule) : '不重复'}</p>
+            <p><strong>备注:</strong> ${event.extendedProps.notes || '无'}</p>
         `;
 
         modal.style.display = 'block';
@@ -378,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 确保 aiAssistant.js 中的函数可用
     if (typeof window.processUserInput === 'undefined') {
-        console.error('AI 助手功能未正确加载。请确保 aiAssistant.js 文件已正确引入并且没有语法错误。');
+        console.error('AI 助�����能未正确加载。请确保 aiAssistant.js 文件已正确引入并且没有语法错误。');
     } else {
         console.log('AI 助手功能已正确加载。');
     }
