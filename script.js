@@ -70,7 +70,7 @@ async function processInput() {
         try {
             const aiResponse = await callAI(input);
             updateChat(`AI回复: ${aiResponse}`);
-            const { schedules, reminders } = parseAIResponse(aiResponse);
+            const { schedules, reminders } = parseAIResponse(aiResponse, input); // 传递原始输入
             
             console.log('Parsed schedules:', schedules);
             console.log('Parsed reminders:', reminders);
@@ -103,7 +103,7 @@ function getNextOccurrence(dayOfWeek, referenceDate = new Date()) {
 }
 
 // 修改 parseAIResponse 函数
-function parseAIResponse(aiResponse) {
+function parseAIResponse(aiResponse, originalInput) {
     try {
         // 移除可能存在的 Markdown 代码块标记
         let cleanResponse = aiResponse.replace(/```json\n?/, '').replace(/```\n?$/, '');
@@ -111,10 +111,10 @@ function parseAIResponse(aiResponse) {
         // 尝试解析为JSON
         try {
             const jsonResponse = JSON.parse(cleanResponse);
-            return parseJsonResponse(jsonResponse);
+            return parseJsonResponse(jsonResponse, originalInput);
         } catch (jsonError) {
             // 如果JSON解析失败，尝试解析Markdown格式
-            return parseMarkdownResponse(cleanResponse);
+            return parseMarkdownResponse(cleanResponse, originalInput);
         }
     } catch (error) {
         console.error('解析AI响应时出错:', error);
@@ -122,7 +122,8 @@ function parseAIResponse(aiResponse) {
     }
 }
 
-function parseJsonResponse(jsonResponse) {
+// 修改 parseJsonResponse 函数
+function parseJsonResponse(jsonResponse, originalInput) {
     const schedules = [];
     let reminders = [];
 
@@ -137,7 +138,8 @@ function parseJsonResponse(jsonResponse) {
                     allDay: false,
                     recurrence: event.重复频率,
                     notes: event.备注,
-                    isReminder: false
+                    isReminder: false,
+                    originalInput: originalInput // 使用原始用户输入
                 });
             } else {
                 console.error('无效的日期时间:', event.开始时间);
@@ -154,7 +156,8 @@ function parseJsonResponse(jsonResponse) {
     return { schedules, reminders };
 }
 
-function parseMarkdownResponse(markdownResponse) {
+// 修改 parseMarkdownResponse 函数
+function parseMarkdownResponse(markdownResponse, originalInput) {
     const schedules = [];
     let reminders = [];
     let currentSchedule = null;
@@ -172,7 +175,8 @@ function parseMarkdownResponse(markdownResponse) {
                 allDay: false,
                 recurrence: '不重复',
                 notes: '',
-                isReminder: false
+                isReminder: false,
+                originalInput: originalInput // 添加原始输入
             };
         } else if (line.startsWith('1. 待办事项：')) {
             currentSchedule.title = line.substring('1. 待办事项：'.length).trim();
@@ -232,7 +236,7 @@ function parseChineseDateTime(dateTimeStr, referenceDate = new Date()) {
     }
 
     console.log('解析后的日期时间:', result);
-    return result;
+    return isValidDate(result) ? result : null;
 }
 
 // 修改 calculateEndTime 函数
@@ -305,7 +309,7 @@ async function showConfirmDialog(schedules) {
                 addEventToCalendar(taskInfo);
             });
             
-            calendar.render(); // 添加这一行来重新渲染日历
+            calendar.render(); // 确保在添加所有事件后重新渲染日历
             
             resolve(selectedSchedules);
         };
@@ -358,7 +362,8 @@ function addEventToCalendar(taskInfo) {
     try {
         const addedEvent = calendar.addEvent(eventData);
         console.log('Event added successfully:', addedEvent);
-        calendar.render(); // 使用 render 而不是 refetchEvents
+        calendar.gotoDate(taskInfo.start); // 跳转到事件日期
+        calendar.render();
         console.log('Calendar events after adding:', calendar.getEvents());
         updateChat(`已添加${taskInfo.isReminder ? '提醒' : '日程'}：${taskInfo.title}`);
     } catch (error) {
@@ -436,14 +441,14 @@ function showEventDetails(event) {
     modalTitle.textContent = '事件详情';
     modalBody.innerHTML = `
         <p><strong>标题:</strong> ${event.title}</p>
-        <p><strong>始时间:</strong> ${event.start.toLocaleString()}</p>
-        <p><strong>结束时间:</strong> ${event.end ? event.end.toLocaleString() : '未指'}</p>
+        <p><strong>开始时间:</strong> ${event.start.toLocaleString()}</p>
+        <p><strong>结束时间:</strong> ${event.end ? event.end.toLocaleString() : '未指定'}</p>
         <p><strong>重复频率:</strong> ${event.rrule ? getRecurrenceText(event.rrule) : '不重复'}</p>
         <p><strong>备注:</strong> ${event.extendedProps.notes || '无'}</p>
         <div class="original-input-container">
             <button id="toggleOriginalInput" class="toggle-btn">显示原文</button>
             <div id="originalInputText" class="original-input-text" style="display: none;">
-                <p>${event.extendedProps.originalInput || '无'}</p>
+                <p>${event.extendedProps.originalInput || '无原始输入'}</p>
             </div>
         </div>
     `;
