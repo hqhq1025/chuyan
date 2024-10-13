@@ -1,7 +1,7 @@
 // 配置信息
-const APPID = '7f74c9fd';
-const APISecret = 'YmMxMmYzMmQ3NzYzNjc4ZDJiNjA3ZTc1';
-const APIKey = 'ae73f23b9eaa1c164fa2b52d923c5fc1';
+const APPID = '9b744978';
+const APISecret = 'NWUzOGIxYjFmNjdmZmIzMzMwOTFjYjVl';
+const APIKey = '854625eae9f2205942f35c61761204f3';
 const SPARK_URL = 'wss://spark-api.xf-yun.com/v3.5/chat';
 
 // 确保CryptoJS已加载
@@ -53,6 +53,7 @@ async function processUserInput(userInput) {
                 payload: {
                     message: {
                         text: [
+                            { role: "system", content: "你是一个任务提取助手。请从用户输入中提取出以下三个要点：1. 待办事项 2. 开始时间 3. 预计时长。只输出这三个要点，不要有其他内容。" },
                             { role: "user", content: userInput }
                         ]
                     }
