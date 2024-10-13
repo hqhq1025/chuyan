@@ -29,35 +29,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // 在文件开头添加一个新的函数来解析AI的响应
+    function parseAIResponse(aiResponse) {
+        const lines = aiResponse.split('\n');
+        let taskInfo = {
+            title: '',
+            start: null,
+            end: null,
+            allDay: false
+        };
+
+        lines.forEach(line => {
+            if (line.startsWith('1. 待办事项：')) {
+                taskInfo.title = line.substring('1. 待办事项：'.length).trim();
+            } else if (line.startsWith('2. 开始时间：')) {
+                const startTimeStr = line.substring('2. 开始时间：'.length).trim();
+                taskInfo.start = parseChineseDateTime(startTimeStr);
+            } else if (line.startsWith('3. 预计时长：')) {
+                const durationStr = line.substring('3. 预计时长：'.length).trim();
+                const durationMatch = durationStr.match(/(\d+)\s*(小时|分钟)/);
+                if (durationMatch && taskInfo.start) {
+                    const amount = parseInt(durationMatch[1]);
+                    const unit = durationMatch[2];
+                    const durationInMinutes = unit === '小时' ? amount * 60 : amount;
+                    taskInfo.end = new Date(taskInfo.start.getTime() + durationInMinutes * 60000);
+                }
+            }
+        });
+
+        return taskInfo;
+    }
+
     function processInput() {
         const input = userInput.value.trim();
         if (input) {
-            updateChat(`用���输入: ${input}`); // 显示用户输入
-            // 使用 AI 助手处理输入
+            updateChat(`用户输入: ${input}`);
             processUserInput(input)
                 .then(aiResponse => {
-                    console.log('AI处理结果:', aiResponse); // 添加日志
+                    console.log('AI处理结果:', aiResponse);
                     updateChat(`AI回复: ${aiResponse}`);
-                    // 尝试从AI回复中提取任务信息
-                    parseInput(aiResponse, (taskInfo) => {
-                        if (taskInfo) {
-                            showConfirmDialog(taskInfo);
-                        } else {
-                            updateChat('无法从AI回复中提取任务信息，请尝试更明确的表述。');
-                        }
-                    });
+                    const taskInfo = parseAIResponse(aiResponse);
+                    if (taskInfo.title && taskInfo.start) {
+                        showConfirmDialog(taskInfo);
+                    } else {
+                        updateChat('无法从AI回复中提取完整的任务信息，请尝试更明确的表述。');
+                    }
                 })
                 .catch(error => {
                     console.error('Error processing input with AI:', error);
                     updateChat(`AI 处理输入时发生错误: ${error.message}`);
-                    // 使用默认解析方法作为备选
-                    parseInput(input, (defaultTaskInfo) => {
-                        if (defaultTaskInfo) {
-                            showConfirmDialog(defaultTaskInfo);
-                        } else {
-                            updateChat('无法识别任务信息，请使用更明确的格式，例如："明天下午3点开会，时长2小时"');
-                        }
-                    });
                 });
             userInput.value = '';
         }
@@ -215,8 +235,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTitle.textContent = '确认添加任务';
         modalBody.innerHTML = `
             <p><strong>标题:</strong> ${taskInfo.title}</p>
-            <p><strong>开始时间:</strong> ${taskInfo.start.toLocaleString()}</p>
-            <p><strong>结束时间:</strong> ${taskInfo.end.toLocaleString()}</p>
+            <p><strong>开始时间:</strong> ${taskInfo.start ? taskInfo.start.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '未指定'}</p>
+            <p><strong>结束时间:</strong> ${taskInfo.end ? taskInfo.end.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '未指定'}</p>
         `;
 
         modal.style.display = 'block';
@@ -250,7 +270,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addEventToCalendar(taskInfo) {
-        calendar.addEvent(taskInfo);
+        calendar.addEvent({
+            title: taskInfo.title,
+            start: taskInfo.start,
+            end: taskInfo.end,
+            allDay: taskInfo.allDay
+        });
         updateChat(`已添加任务：${taskInfo.title}`);
     }
 
@@ -374,6 +399,53 @@ document.addEventListener('DOMContentLoaded', () => {
                 callback(null);
             }
         };
+    }
+
+    // 添加新的函数来解析中文日期时间字符串
+    function parseChineseDateTime(dateTimeStr) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const date = now.getDate();
+
+        // 解析相对日期
+        if (dateTimeStr.includes('今天')) {
+            // 使用当前日期
+        } else if (dateTimeStr.includes('明天')) {
+            now.setDate(date + 1);
+        } else if (dateTimeStr.includes('后天')) {
+            now.setDate(date + 2);
+        } else if (dateTimeStr.includes('下周')) {
+            now.setDate(date + 7);
+        } else {
+            // 尝试解析具体日期，如果失败则使用当前日期
+            const dateMatch = dateTimeStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+            if (dateMatch) {
+                now.setFullYear(parseInt(dateMatch[1]));
+                now.setMonth(parseInt(dateMatch[2]) - 1);
+                now.setDate(parseInt(dateMatch[3]));
+            }
+        }
+
+        // 解析时间
+        const timeMatch = dateTimeStr.match(/(\d{1,2})([:：](\d{2}))?\s*(上午|下午|晚上)?/);
+        if (timeMatch) {
+            let hours = parseInt(timeMatch[1]);
+            const minutes = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
+            const period = timeMatch[4];
+
+            if (period === '下午' || period === '晚上' || (period === undefined && hours < 12 && hours !== 0)) {
+                hours += 12;
+            }
+            if (hours === 24) hours = 0;
+
+            now.setHours(hours, minutes, 0, 0);
+        } else {
+            // 如果没有指定时间，默认设置为当天的上午9点
+            now.setHours(9, 0, 0, 0);
+        }
+
+        return now;
     }
 
     // 确保 aiAssistant.js 中的函数可用
