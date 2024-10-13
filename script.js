@@ -29,7 +29,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 在文件开头添加一个新的函数来解析AI的响应
+    // 在文件开头添加以下函数
+    async function callAI(userInput) {
+        if (typeof window.processUserInput === 'undefined') {
+            console.error('processUserInput 函数未定义。请确保 aiAssistant.js 文件已正确加载。');
+            throw new Error('AI 助手功能未正确加载');
+        }
+        try {
+            const aiResponse = await window.processUserInput(userInput);
+            console.log('AI响应:', aiResponse);
+            return aiResponse;
+        } catch (error) {
+            console.error('调用AI时出错:', error);
+            throw error;
+        }
+    }
+
+    // 修改 processInput 函数
+    async function processInput() {
+        const input = userInput.value.trim();
+        if (input) {
+            updateChat(`用户输入: ${input}`);
+            try {
+                const aiResponse = await callAI(input);
+                updateChat(`AI回复: ${aiResponse}`);
+                const taskInfo = parseAIResponse(aiResponse);
+                if (taskInfo.title && taskInfo.start) {
+                    showConfirmDialog(taskInfo);
+                } else {
+                    updateChat('无法从AI回复中提取完整的任务信息，请尝试更明确的表述。');
+                }
+            } catch (error) {
+                console.error('处理输入时出错:', error);
+                updateChat(`处理输入��出错: ${error.message}`);
+            }
+            userInput.value = '';
+        }
+    }
+
+    // 修改 parseAIResponse 函数
     function parseAIResponse(aiResponse) {
         const lines = aiResponse.split('\n');
         let taskInfo = {
@@ -44,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 taskInfo.title = line.substring('1. 待办事项：'.length).trim();
             } else if (line.startsWith('2. 开始时间：')) {
                 const startTimeStr = line.substring('2. 开始时间：'.length).trim();
-                taskInfo.start = parseChineseDateTime(startTimeStr);
+                taskInfo.start = new Date(startTimeStr);
             } else if (line.startsWith('3. 预计时长：')) {
                 const durationStr = line.substring('3. 预计时长：'.length).trim();
                 const durationMatch = durationStr.match(/(\d+)\s*(小时|分钟)/);
@@ -60,170 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return taskInfo;
     }
 
-    function processInput() {
-        const input = userInput.value.trim();
-        if (input) {
-            updateChat(`用户输入: ${input}`);
-            processUserInput(input)
-                .then(aiResponse => {
-                    console.log('AI处理结果:', aiResponse);
-                    updateChat(`AI回复: ${aiResponse}`);
-                    const taskInfo = parseAIResponse(aiResponse);
-                    if (taskInfo.title && taskInfo.start) {
-                        showConfirmDialog(taskInfo);
-                    } else {
-                        updateChat('无法从AI回复中提取完整的任务信息，请尝试更明确的表述。');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error processing input with AI:', error);
-                    updateChat(`AI 处理输入时发生错误: ${error.message}`);
-                });
-            userInput.value = '';
-        }
-    }
-
-    function parseInput(input, callback) {
-        const dateTimeRegex = /(今天|明天|后天|下周[一二三四五六日]|本周[一二三四五六日]|\d{4}年\d{1,2}月\d{1,2}日|\d{1,2}月\d{1,2}日)?\s*(上午|下午|晚上)?\s*(\d{1,2}([点:：]\d{0,2})?)(.*)/;
-        const durationRegex = /(?:时长|持续)?\s?(\d+)\s?(小时|分钟)/;
-
-        const match = input.match(dateTimeRegex);
-        if (!match) {
-            callback(null);
-            return;
-        }
-
-        const [, dateStr, periodOfDay, timeStr, , title] = match;
-        const durationMatch = input.match(durationRegex);
-
-        let date = parseDate(dateStr);
-        let time = parseTime(timeStr, periodOfDay);
-        let duration = durationMatch ? parseDuration(durationMatch[1], durationMatch[2]) : 60; // 默认1小时
-
-        if (!date && !time) {
-            showCustomPrompt('未指定日期和时间', '是否使用当前时间？', (result) => {
-                if (result === 'yes') {
-                    const now = new Date();
-                    date = now;
-                    time = now;
-                    continueProcessing();
-                } else {
-                    callback(null);
-                }
-            });
-            return;
-        }
-
-        if (!date) {
-            date = new Date(); // 如果没有指定日期，使用今天
-        }
-
-        if (!time) {
-            showCustomPrompt('未指定时间', '请输入时间（如 14:00）：', (result) => {
-                if (result) {
-                    time = parseTime(result);
-                    if (time) {
-                        continueProcessing();
-                    } else {
-                        callback(null);
-                    }
-                } else {
-                    callback(null);
-                }
-            }, '09:00');
-            return;
-        }
-
-        continueProcessing();
-
-        function continueProcessing() {
-            const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes());
-            const end = new Date(start.getTime() + duration * 60000);
-
-            callback({
-                title: title.trim(),
-                start: start,
-                end: end,
-                allDay: false
-            });
-        }
-    }
-
-    function parseDate(dateStr) {
-        if (!dateStr) return null;
-
-        const now = new Date();
-        const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-
-        if (dateStr === '今天') return now;
-        if (dateStr === '明天') {
-            const tomorrow = new Date(now);
-            tomorrow.setDate(now.getDate() + 1);
-            return tomorrow;
-        }
-        if (dateStr === '后天') {
-            const dayAfterTomorrow = new Date(now);
-            dayAfterTomorrow.setDate(now.getDate() + 2);
-            return dayAfterTomorrow;
-        }
-
-        if (dateStr.includes('周') || dateStr.includes('星期')) {
-            const dayIndex = weekdays.indexOf(dateStr.charAt(dateStr.length - 1));
-            const isNextWeek = dateStr.includes('下');
-            const targetDate = new Date(now);
-            const currentDay = now.getDay();
-            let daysToAdd;
-
-            if (isNextWeek) {
-                daysToAdd = dayIndex + 7 - currentDay;
-                if (daysToAdd > 7) daysToAdd -= 7;
-            } else { // 本周
-                daysToAdd = (dayIndex + 7 - currentDay) % 7;
-            }
-
-            targetDate.setDate(now.getDate() + daysToAdd);
-            return targetDate;
-        }
-
-        const dateMatch = dateStr.match(/(\d{4}年)?(\d{1,2})月(\d{1,2})日?/);
-        if (dateMatch) {
-            const [, yearStr, month, day] = dateMatch;
-            const year = yearStr ? parseInt(yearStr) : now.getFullYear();
-            return new Date(year, parseInt(month) - 1, parseInt(day));
-        }
-
-        return null; // 如果无法解析，返回null
-    }
-
-    function parseTime(timeStr, periodOfDay) {
-        if (!timeStr) return null;
-
-        let [hours, minutes] = timeStr.split(/[点:：]/).map(num => parseInt(num));
-        minutes = minutes || 0;
-
-        // 扩展时间段识别
-        const morningPeriods = ['早上', '早晨', '上午', '凌晨'];
-        const afternoonPeriods = ['下午', '午后', '晚上', '傍晚', '夜晚'];
-
-        // 如果使用24小时制，则直接使用
-        if (hours >= 0 && hours <= 23) {
-            // 对于凌晨的特殊处理
-            if (hours >= 0 && hours <= 5 && !morningPeriods.includes(periodOfDay)) {
-                hours += 12;
-            }
-        } else if (afternoonPeriods.includes(periodOfDay) || (hours <= 12 && periodOfDay === '中午')) {
-            hours = hours % 12 + 12;
-        } else if ((morningPeriods.includes(periodOfDay) || !periodOfDay) && hours === 12) {
-            hours = 0;
-        }
-
-        return new Date(0, 0, 0, hours, minutes);
-    }
-
-    function parseDuration(amount, unit) {
-        amount = parseInt(amount);
-        return unit === '小时' ? amount * 60 : amount;
-    }
+    // 删除或注释掉 parseInput 函数，因为我们现在直接使用AI的响应
 
     function showConfirmDialog(taskInfo) {
         const modal = document.getElementById('customModal');
@@ -449,7 +324,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 确保 aiAssistant.js 中的函数可用
-    if (typeof processUserInput === 'undefined') {
-        console.error('AI 助手功能未正确加载。请确保 aiAssistant.js 文件已正确引入。');
+    if (typeof window.processUserInput === 'undefined') {
+        console.error('AI 助手功能未正确加载。请确保 aiAssistant.js 文件已正确引入并且没有语法错误。');
+    } else {
+        console.log('AI 助手功能已正确加载。');
     }
 });
+
+// 为了调试，添加一个控制台日志
+console.log('script.js 已加载');

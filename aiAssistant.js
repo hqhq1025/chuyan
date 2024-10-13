@@ -1,7 +1,7 @@
 // 配置信息
-const APPID = '9b744978';
-const APISecret = 'NWUzOGIxYjFmNjdmZmIzMzMwOTFjYjVl';
-const APIKey = '854625eae9f2205942f35c61761204f3';
+const APPID = '7f74c9fd';
+const APISecret = 'YmMxMmYzMmQ3NzYzNjc4ZDJiNjA3ZTc1';
+const APIKey = 'ae73f23b9eaa1c164fa2b52d923c5fc1';
 const SPARK_URL = 'wss://spark-api.xf-yun.com/v3.5/chat';
 
 // 确保CryptoJS已加载
@@ -55,10 +55,10 @@ async function processUserInput(userInput) {
                         text: [
                             { role: "system", content: 
                                 "你是一个任务提取助手。请从用户输入中提取出以下三个要点：" +
-                                "1. 待办事项" +
-                                "2. 开始时间（确保提取出明确的时间信息，如果是模糊的时间，如“明天”或“下周”，请将其转换为具体的日期时间格式）。" +
+                                "1. 待办事项，" +
+                                "2. 开始时间（确保提取出明确的时间信息，如果是���糊的时间，如'明天'或'下周'，请将其转换为具体的日期时间格式），" +
                                 "3. 预计时长（提取时间单位，如小时、分钟，如果用户未提供时长，可以尝试根据上下文推断出合适的时长）。" +
-                                "如果你无法提取某个信息，请用“未知”标识。" +
+                                "如果你无法提取某个信息，请用'未知'标识。" +
                                 "只输出这三个要点，不要有其他内容。" },
                             { role: "user", content: userInput }
                         ]
@@ -98,5 +98,10 @@ async function processUserInput(userInput) {
     });
 }
 
-// 将processUserInput函数暴露给全局作用域
-window.processUserInput = processUserInput;
+// 确保 processUserInput 函数被暴露给全局作用域
+if (typeof window !== 'undefined') {
+    window.processUserInput = processUserInput;
+}
+
+// 为了调试，添加一个控制台日志
+console.log('aiAssistant.js 已加载，processUserInput 函数已定义');
