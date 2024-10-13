@@ -17,7 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         eventClick: function(info) {
             showEventDetails(info.event);
-        }
+        },
+        events: [], // 初始化一个空的事件数组
     });
     calendar.render();
 
@@ -119,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (jsonResponse.日程) {
             jsonResponse.日程.forEach(event => {
                 const startDate = parseChineseDateTime(event.开始时间);
-                if (startDate) {
+                if (isValidDate(startDate)) {
                     schedules.push({
                         title: event.待办事项,
                         start: startDate,
@@ -130,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         isReminder: false
                     });
                 } else {
-                    console.error('无法解析日期时间:', event.开始时间);
+                    console.error('无效的日期时间:', event.开始时间);
                 }
             });
         }
@@ -203,45 +204,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = new Date(referenceDate);
         const currentYear = referenceDate.getFullYear();
 
-        // 处理相对日期
-        if (dateTimeStr.includes('今天')) {
-            // 保持当前日期不变
-        } else if (dateTimeStr.includes('明天')) {
-            result.setDate(result.getDate() + 1);
-        } else if (dateTimeStr.includes('后天')) {
-            result.setDate(result.getDate() + 2);
-        } else if (dateTimeStr.includes('下周')) {
-            result.setDate(result.getDate() + 7);
+        // 解析日期
+        const dateMatch = dateTimeStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+        if (dateMatch) {
+            result.setFullYear(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
         } else {
-            // 解析具体日期
-            const dateMatch = dateTimeStr.match(/(\d{4}年)?(\d{1,2})月(\d{1,2})[日号]/);
-            if (dateMatch) {
-                const year = dateMatch[1] ? parseInt(dateMatch[1]) : currentYear;
-                const month = parseInt(dateMatch[2]) - 1; // JavaScript中月份是0-11
-                const day = parseInt(dateMatch[3]);
-                result.setFullYear(year, month, day);
-            }
+            console.error('无法解析日期:', dateTimeStr);
+            return null;
         }
 
         // 解析时间
-        const timeMatch = dateTimeStr.match(/(\d{1,2})([:：](\d{2}))?\s*(上午|下午|晚上|凌晨)?/);
+        const timeMatch = dateTimeStr.match(/(\d{1,2}):(\d{2})/);
         if (timeMatch) {
-            let hours = parseInt(timeMatch[1]);
-            const minutes = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
-            const period = timeMatch[4];
-
-            if (period === '下午' && hours < 12) {
-                hours += 12;
-            } else if (period === '晚上') {
-                hours = hours === 12 ? 0 : hours + 12;
-            } else if (period === '凌晨' && hours === 12) {
-                hours = 0;
-            } else if (!period && hours < 12 && hours !== 0) {
-                // 如果没有指定上午/下午，默认下午
-                hours += 12;
-            }
-
-            result.setHours(hours, minutes, 0, 0);
+            result.setHours(parseInt(timeMatch[1]), parseInt(timeMatch[2]), 0, 0);
         } else {
             // 如果没有指定时间，默认设置为当天的上午9点
             result.setHours(9, 0, 0, 0);
@@ -348,8 +323,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const eventData = {
             title: taskInfo.title,
             start: taskInfo.start,
-            end: taskInfo.end,
-            allDay: taskInfo.allDay,
+            end: taskInfo.end || null, // 如果没有结束时间，设置为 null
+            allDay: taskInfo.allDay || false,
             extendedProps: {
                 notes: taskInfo.notes,
                 originalInput: taskInfo.originalInput,
@@ -367,6 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const addedEvent = calendar.addEvent(eventData);
             console.log('Event added successfully:', addedEvent);
+            calendar.render(); // 重新渲染日历以显示新添加的事件
             updateChat(`已添加${taskInfo.isReminder ? '提醒' : '日程'}：${taskInfo.title}`);
         } catch (error) {
             console.error('Failed to add event:', error);
@@ -640,5 +616,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // 添加更多绝对日期解析逻辑...
         return null;
+    }
+
+    // 添加这个函数来检查日期是否有效
+    function isValidDate(date) {
+        return date instanceof Date && !isNaN(date);
     }
 });
