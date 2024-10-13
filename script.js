@@ -1,8 +1,9 @@
 let notificationDate = new Date(); // 默认为当前日期
+let calendar;
 
 document.addEventListener('DOMContentLoaded', () => {
     const calendarEl = document.getElementById('calendar');
-    const calendar = new FullCalendar.Calendar(calendarEl, {
+    calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
             left: 'prev,next today',
@@ -57,6 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateChat(`AI回复: ${aiResponse}`);
                 const { schedules, reminders } = parseAIResponse(aiResponse);
                 
+                console.log('Parsed schedules:', schedules);  // 添加这行日志
+                console.log('Parsed reminders:', reminders);  // 添加这行日志
+
                 if (schedules.length > 0) {
                     const selectedSchedules = await showConfirmDialog(schedules);
                     for (const taskInfo of selectedSchedules) {
@@ -96,28 +100,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const schedules = [];
             let reminders = [];
 
-            if (jsonResponse.日程 && Array.isArray(jsonResponse.日程)) {
-                jsonResponse.日程.forEach(event => {
-                    const startTime = parseChineseDateTime(event.开始时间);
-                    if (startTime) {
-                        schedules.push({
-                            title: event.待办事项 || '未知事项',
-                            start: startTime,
-                            end: event.预计时长 !== '未知' ? calculateEndTime(startTime, event.预计时长) : null,
-                            allDay: false,
-                            recurrence: event.重复频率 || '不重复',
-                            notes: event.备注 || '',
-                            isReminder: false
-                        });
+            for (const key in jsonResponse) {
+                if (key.startsWith('日程')) {
+                    const event = jsonResponse[key];
+                    schedules.push({
+                        title: event.待办事项,
+                        start: parseChineseDateTime(event.开始时间),
+                        end: event.预计时长 !== '未知' ? calculateEndTime(parseChineseDateTime(event.开始时间), event.预计时长) : null,
+                        allDay: false,
+                        recurrence: event.重复频率,
+                        notes: event.备注,
+                        isReminder: false
+                    });
+                } else if (key === '提醒事项') {
+                    if (typeof jsonResponse.提醒事项 === 'string') {
+                        reminders = [jsonResponse.提醒事项];
+                    } else if (Array.isArray(jsonResponse.提醒事项)) {
+                        reminders = jsonResponse.提醒事项;
                     }
-                });
-            }
-
-            if (jsonResponse.提醒事项) {
-                if (typeof jsonResponse.提醒事项 === 'string') {
-                    reminders = [jsonResponse.提醒事项];
-                } else if (Array.isArray(jsonResponse.提醒事项)) {
-                    reminders = jsonResponse.提醒事项;
                 }
             }
 
@@ -202,6 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 修改 showConfirmDialog 函数
     async function showConfirmDialog(schedules) {
+        console.log('Schedules to confirm:', schedules);  // 添加这行日志
         return new Promise((resolve) => {
             const modal = document.getElementById('customModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -243,6 +244,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 modal.style.display = 'none';
                 resolve(selectedSchedules);
+
+                // 直接在这里添加事件到日历
+                selectedSchedules.forEach(taskInfo => {
+                    addEventToCalendar(taskInfo);
+                });
             };
 
             cancelBtn.onclick = function() {
@@ -261,6 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 修改 addEventToCalendar 函数
     function addEventToCalendar(taskInfo) {
+        console.log('Adding event to calendar:', taskInfo);  // 添加日志
+
         const eventData = {
             title: taskInfo.title,
             start: taskInfo.start,
@@ -280,8 +288,14 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
-        calendar.addEvent(eventData);
-        updateChat(`已添加${taskInfo.isReminder ? '提醒' : '日程'}：${taskInfo.title}`);
+        try {
+            const addedEvent = calendar.addEvent(eventData);
+            console.log('Event added successfully:', addedEvent);  // 添加日志
+            updateChat(`已添加${taskInfo.isReminder ? '提醒' : '日程'}：${taskInfo.title}`);
+        } catch (error) {
+            console.error('Failed to add event:', error);  // 添加错误日志
+            updateChat(`添加${taskInfo.isReminder ? '提醒' : '日程'}失败：${taskInfo.title}`);
+        }
     }
 
     function getFrequency(recurrence) {
@@ -354,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalBody.innerHTML = `
             <p><strong>标题:</strong> ${event.title}</p>
             <p><strong>始时间:</strong> ${event.start.toLocaleString()}</p>
-            <p><strong>结束时间:</strong> ${event.end ? event.end.toLocaleString() : '未指定'}</p>
+            <p><strong>结束时间:</strong> ${event.end ? event.end.toLocaleString() : '未指'}</p>
             <p><strong>重复频率:</strong> ${event.rrule ? getRecurrenceText(event.rrule) : '不重复'}</p>
             <p><strong>备注:</strong> ${event.extendedProps.notes || '无'}</p>
             <div class="original-input-container">
@@ -415,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 添加输入样式模板功能
+    // 添加入样式模板功能
     window.setInput = function(sample) {
         userInput.value = sample;
     }
@@ -625,7 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (input.includes('下周')) {
             return new Date(today.setDate(today.getDate() + 7));
         }
-        // 添加更多相对期解析逻辑...
+        // 添更多相对期解析逻辑...
         return null;
     }
 
