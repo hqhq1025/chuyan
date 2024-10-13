@@ -181,19 +181,58 @@ h2 {
 
 /* 新添加的样式 */
 .original-input-container {
-    margin-top: 15px;
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
 }
 
-#toggleOriginalInput {
+.toggle-btn {
     background-color: #f0f0f0;
     border: 1px solid #ccc;
-    padding: 5px 10px;
+    padding: 8px 15px;
     cursor: pointer;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: all 0.3s ease;
 }
 
-#originalInputText {
-    margin-top: 10px;
-    padding: 10px;
+.toggle-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.toggle-btn.active {
+    background-color: #0071e3;
+    color: white;
+    border-color: #0071e3;
+}
+
+.original-input-text {
+    margin-top: 15px;
+    padding: 15px;
     background-color: #f9f9f9;
     border: 1px solid #eee;
+    border-radius: 5px;
+    font-size: 14px;
+    line-height: 1.5;
+    max-height: 200px;
+    overflow-y: auto;
+    transition: all 0.3s ease;
+}
+
+/* 添加滚动条样式 */
+.original-input-text::-webkit-scrollbar {
+    width: 8px;
+}
+
+.original-input-text::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.original-input-text::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.original-input-text::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }

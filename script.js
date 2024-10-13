@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         interval: 1
                     };
                     break;
-                // 可以根据需要添加更多的重复规则
+                // 可��根据需要添加更多的重复规则
             }
         }
 
@@ -265,9 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <p><strong>重复频率:</strong> ${event.rrule ? getRecurrenceText(event.rrule) : '不重复'}</p>
             <p><strong>备注:</strong> ${event.extendedProps.notes || '无'}</p>
             <div class="original-input-container">
-                <button id="toggleOriginalInput">显示原始输入</button>
-                <div id="originalInputText" style="display: none;">
-                    <p><strong>原始输入:</strong> ${event.extendedProps.originalInput || '无'}</p>
+                <button id="toggleOriginalInput" class="toggle-btn">显示原文</button>
+                <div id="originalInputText" class="original-input-text" style="display: none;">
+                    <p>${event.extendedProps.originalInput || '无'}</p>
                 </div>
             </div>
         `;
@@ -278,10 +278,12 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleBtn.addEventListener('click', function() {
             if (originalInputText.style.display === 'none') {
                 originalInputText.style.display = 'block';
-                toggleBtn.textContent = '隐藏原始输入';
+                toggleBtn.textContent = '隐藏原文';
+                toggleBtn.classList.add('active');
             } else {
                 originalInputText.style.display = 'none';
-                toggleBtn.textContent = '显示原始输入';
+                toggleBtn.textContent = '显示原文';
+                toggleBtn.classList.remove('active');
             }
         });
 
