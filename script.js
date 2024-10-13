@@ -96,50 +96,93 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // 移除可能存在的 Markdown 代码块标记
             let cleanResponse = aiResponse.replace(/```json\n?/, '').replace(/```\n?$/, '');
-            const jsonResponse = JSON.parse(cleanResponse);
-            const schedules = [];
-            let reminders = [];
-
-            for (const key in jsonResponse) {
-                if (key.startsWith('日程')) {
-                    const event = jsonResponse[key];
-                    schedules.push({
-                        title: event.待办事项,
-                        start: parseChineseDateTime(event.开始时间),
-                        end: event.预计时长 !== '未知' ? calculateEndTime(parseChineseDateTime(event.开始时间), event.预计时长) : null,
-                        allDay: false,
-                        recurrence: event.重复频率,
-                        notes: event.备注,
-                        isReminder: false
-                    });
-                } else if (key === '提醒事项') {
-                    if (typeof jsonResponse.提醒事项 === 'string') {
-                        reminders = [jsonResponse.提醒事项];
-                    } else if (Array.isArray(jsonResponse.提醒事项)) {
-                        reminders = jsonResponse.提醒事项;
-                    }
-                }
+            
+            // 尝试解析为JSON
+            try {
+                const jsonResponse = JSON.parse(cleanResponse);
+                return parseJsonResponse(jsonResponse);
+            } catch (jsonError) {
+                // 如果JSON解析失败，尝试解析Markdown格式
+                return parseMarkdownResponse(cleanResponse);
             }
-
-            // 将提醒事项也添加到日程中
-            reminders.forEach(reminder => {
-                const reminderDate = parseChineseDateTime(reminder) || new Date();
-                schedules.push({
-                    title: reminder,
-                    start: reminderDate,
-                    end: null,
-                    allDay: true,
-                    recurrence: '不重复',
-                    notes: '提醒事项',
-                    isReminder: true
-                });
-            });
-
-            return { schedules, reminders };
         } catch (error) {
             console.error('解析AI响应时出错:', error);
             return { schedules: [], reminders: [] };
         }
+    }
+
+    function parseJsonResponse(jsonResponse) {
+        const schedules = [];
+        let reminders = [];
+
+        if (jsonResponse.日程) {
+            jsonResponse.日程.forEach(event => {
+                schedules.push({
+                    title: event.待办事项,
+                    start: parseChineseDateTime(event.开始时间),
+                    end: event.预计时长 !== '未知' ? calculateEndTime(parseChineseDateTime(event.开始时间), event.预计时长) : null,
+                    allDay: false,
+                    recurrence: event.重复频率,
+                    notes: event.备注,
+                    isReminder: false
+                });
+            });
+        }
+
+        if (jsonResponse.提醒事项) {
+            reminders = jsonResponse.提醒事项;
+        }
+
+        console.log('解析后的日程:', schedules);
+        console.log('解析后的提醒事项:', reminders);
+        return { schedules, reminders };
+    }
+
+    function parseMarkdownResponse(markdownResponse) {
+        const schedules = [];
+        let reminders = [];
+        let currentSchedule = null;
+
+        const lines = markdownResponse.split('\n');
+        for (const line of lines) {
+            if (line.startsWith('### 日程')) {
+                if (currentSchedule) {
+                    schedules.push(currentSchedule);
+                }
+                currentSchedule = {
+                    title: '',
+                    start: null,
+                    end: null,
+                    allDay: false,
+                    recurrence: '不重复',
+                    notes: '',
+                    isReminder: false
+                };
+            } else if (line.startsWith('1. 待办事项：')) {
+                currentSchedule.title = line.substring('1. 待办事项：'.length).trim();
+            } else if (line.startsWith('2. 开始时间：')) {
+                currentSchedule.start = parseChineseDateTime(line.substring('2. 开始时间：'.length).trim());
+            } else if (line.startsWith('3. 预计时长：')) {
+                const durationStr = line.substring('3. 预计时长：'.length).trim();
+                if (durationStr !== '未知' && currentSchedule.start) {
+                    currentSchedule.end = calculateEndTime(currentSchedule.start, durationStr);
+                }
+            } else if (line.startsWith('4. 重复频率：')) {
+                currentSchedule.recurrence = line.substring('4. 重复频率：'.length).trim();
+            } else if (line.startsWith('5. 备注：')) {
+                currentSchedule.notes = line.substring('5. 备注：'.length).trim();
+            } else if (line.startsWith('### 提醒事项：')) {
+                reminders.push(line.substring('### 提醒事项：'.length).trim());
+            }
+        }
+
+        if (currentSchedule) {
+            schedules.push(currentSchedule);
+        }
+
+        console.log('解析后的日程:', schedules);
+        console.log('解析后的提醒事项:', reminders);
+        return { schedules, reminders };
     }
 
     // 修改 parseChineseDateTime 函数
@@ -148,6 +191,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('日期时间字符串为空');
             return null;
         }
+
+        console.log('正在解析日期时间:', dateTimeStr);
 
         const result = new Date(referenceDate);
         const currentYear = referenceDate.getFullYear();
@@ -185,11 +230,17 @@ document.addEventListener('DOMContentLoaded', () => {
             result.setHours(9, 0, 0, 0);
         }
 
+        console.log('解析后的日期时间:', result);
         return result;
     }
 
     // 修改 calculateEndTime 函数
     function calculateEndTime(startTime, duration) {
+        if (!startTime || !duration) {
+            console.warn('计算结束时间失败: 开始时间或持续时间无效');
+            return null;
+        }
+
         const durationMatch = duration.match(/(\d+)\s*(小时|分钟)/);
         if (durationMatch) {
             const amount = parseInt(durationMatch[1]);
@@ -197,6 +248,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const durationInMinutes = unit === '小时' ? amount * 60 : amount;
             return new Date(startTime.getTime() + durationInMinutes * 60000);
         }
+
+        console.warn(`无法解析持续时间: ${duration}`);
         return null;
     }
 
