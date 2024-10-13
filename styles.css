@@ -28,7 +28,7 @@ body {
 }
 
 #calendar {
-    height: calc(100% - 40px);
+    height: calc(100% - 60px); /* 调整日历高度以适应新添加的按钮 */
 }
 
 .fc .fc-toolbar-title {
@@ -235,4 +235,28 @@ h2 {
 
 .original-input-text::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+/* 在文件中添加或修改以下样式 */
+
+.schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.add-course-schedule-btn {
+    padding: 8px 15px;
+    background-color: #0071e3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.add-course-schedule-btn:hover {
+    background-color: #005bbf;
 }
