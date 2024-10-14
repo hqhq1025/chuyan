@@ -48,8 +48,8 @@ function extractCourses(jsonData) {
                 if (row[j] && typeof row[j] === 'string') {
                     const courseInfo = row[j].split('\n').filter(item => item.trim() !== '');
                     if (courseInfo.length >= 3) {
-                        const weekInfo = courseInfo[courseInfo.length - 3].match(/(\d+)(?:-(\d+))?(?:\[单周\]|\[双周\])?/);
-                        const weeks = weekInfo ? extractWeeks(weekInfo[0]) : [];
+                        const weekInfo = courseInfo[courseInfo.length - 3];
+                        const weeks = extractWeeks(weekInfo);
                         courses.push({
                             name: courseInfo[0],
                             teacher: courseInfo[1],
@@ -70,33 +70,24 @@ function extractCourses(jsonData) {
 
 function extractWeeks(weekString) {
     const weeks = [];
-    const patterns = [
-        /(\d+)-(\d+)(?:\[单周\]|\[双周\])?/g,
-        /(\d+)(?:,(\d+))*(?:\[单周\]|\[双周\])?/g,
-    ];
+    // 匹配所有周数段，包括单独的周数和连续的周数范围
+    const pattern = /(\d+)(?:-(\d+))?/g;
+    let match;
 
-    patterns.forEach(pattern => {
-        let match;
-        while ((match = pattern.exec(weekString)) !== null) {
-            if (match[2] && match[2].includes(',')) {
-                match[2].split(',').forEach(week => weeks.push(parseInt(week)));
-            } else if (match[2]) {
-                const start = parseInt(match[1]);
-                const end = parseInt(match[2]);
-                for (let i = start; i <= end; i++) {
-                    if (weekString.includes('[单周]') && i % 2 === 1) {
-                        weeks.push(i);
-                    } else if (weekString.includes('[双周]') && i % 2 === 0) {
-                        weeks.push(i);
-                    } else if (!weekString.includes('[单周]') && !weekString.includes('[双周]')) {
-                        weeks.push(i);
-                    }
-                }
-            } else {
-                weeks.push(parseInt(match[1]));
+    while ((match = pattern.exec(weekString)) !== null) {
+        const start = parseInt(match[1]);
+        const end = match[2] ? parseInt(match[2]) : start;
+
+        for (let i = start; i <= end; i++) {
+            if (weekString.includes('[单周]') && i % 2 === 1) {
+                weeks.push(i);
+            } else if (weekString.includes('[双周]') && i % 2 === 0) {
+                weeks.push(i);
+            } else if (!weekString.includes('[单周]') && !weekString.includes('[双周]')) {
+                weeks.push(i);
             }
         }
-    });
+    }
 
     return [...new Set(weeks)].sort((a, b) => a - b);
 }
