@@ -4,6 +4,14 @@ let calendar;
 document.addEventListener('DOMContentLoaded', () => {
     initializeCalendar();
     // ... 其他初始化代码 ...
+
+    // 添加课程表按钮的事件监听器
+    const addCourseScheduleBtn = document.getElementById('addCourseScheduleBtn');
+    if (addCourseScheduleBtn) {
+        addCourseScheduleBtn.addEventListener('click', showUploadModal);
+    } else {
+        console.error('添加课程表按钮未找到');
+    }
 });
 
 function initializeCalendar() {
@@ -113,7 +121,7 @@ function parseAIResponse(aiResponse, originalInput) {
             const jsonResponse = JSON.parse(cleanResponse);
             return parseJsonResponse(jsonResponse, originalInput);
         } catch (jsonError) {
-            // 如果JSON解析失败，尝试解析Markdown格式
+            // 如果JSON解析失败，���试解析Markdown格式
             return parseMarkdownResponse(cleanResponse, originalInput);
         }
     } catch (error) {
@@ -151,7 +159,7 @@ function parseJsonResponse(jsonResponse, originalInput) {
         reminders = jsonResponse.提醒事项;
     }
 
-    console.log('解析后的日程:', schedules);
+    console.log('解析后的���程:', schedules);
     console.log('解析后的提醒事项:', reminders);
     return { schedules, reminders };
 }
@@ -545,11 +553,10 @@ function extractCourses(jsonData) {
 }
 
 function convertToCalendarEvents(courses) {
-    const daysOfWeek = ['周日', '周', '周二', '周三', '周四', '周五', '周六'];
+    const daysOfWeek = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
     return courses.map(course => {
         const dayIndex = daysOfWeek.indexOf(course.day);
-        const today = new Date();
-        const courseDate = new Date(today.setDate(today.getDate() - today.getDay() + dayIndex));
+        const courseDate = getNextOccurrence(dayIndex);
         
         return {
             title: course.name,
@@ -643,4 +650,42 @@ function parseAbsoluteDate(input) {
 // 添加这个函数来检查日期是否有效
 function isValidDate(date) {
     return date instanceof Date && !isNaN(date);
+}
+
+// 添加这些新函数
+function showUploadModal() {
+    const modal = document.getElementById('uploadModal');
+    const fileInput = document.getElementById('xlsFileInput');
+    const uploadBtn = document.getElementById('uploadFileBtn');
+    const cancelBtn = document.getElementById('cancelUploadBtn');
+
+    modal.style.display = 'block';
+
+    uploadBtn.onclick = function() {
+        const file = fileInput.files[0];
+        if (file) {
+            parseXLSFile(file).then(processUploadedCourses);
+        } else {
+            alert('请选择一个文件');
+        }
+    };
+
+    cancelBtn.onclick = function() {
+        modal.style.display = 'none';
+    };
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    };
+}
+
+function processUploadedCourses(jsonData) {
+    const courses = extractCourses(jsonData);
+    const events = convertToCalendarEvents(courses);
+    events.forEach(event => calendar.addEvent(event));
+    calendar.render();
+    document.getElementById('uploadModal').style.display = 'none';
+    updateChat('课程表已成功添加');
 }
