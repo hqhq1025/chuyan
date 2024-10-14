@@ -290,14 +290,44 @@ h2 {
 }
 
 .toggle-switch label {
+    display: flex;
+    align-items: center;
     cursor: pointer;
-    padding: 5px 10px;
-    background-color: #ccc;
-    border-radius: 15px;
+    padding: 5px;
     transition: background-color 0.3s;
 }
 
-.toggle-switch input[type="checkbox"]:checked + label {
+.toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+    background-color: #ccc;
+    border-radius: 20px;
+    transition: 0.3s;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.toggle-text {
+    margin-left: 10px;
+    font-size: 14px;
+}
+
+.toggle-switch input[type="checkbox"]:checked + label .toggle-slider {
     background-color: #0071e3;
-    color: white;
+}
+
+.toggle-switch input[type="checkbox"]:checked + label .toggle-slider:before {
+    transform: translateX(20px);
 }
