@@ -106,7 +106,7 @@ async function processInput() {
     }
 }
 
-// 在文件顶部添加这个函数
+// 在文件顶部添这个函数
 function getNextOccurrence(dayOfWeek, referenceDate = new Date()) {
     const daysUntilNext = (dayOfWeek - referenceDate.getDay() + 7) % 7;
     const nextDate = new Date(referenceDate);
@@ -493,7 +493,7 @@ function showEventDetails(event) {
         <div class="original-input-container">
             <button id="toggleOriginalInput" class="toggle-btn">显示原文</button>
             <div id="originalInputText" class="original-input-text" style="display: none;">
-                <p>${event.extendedProps.originalInput || '无原始输入'}</p>
+                <p>${event.extendedProps.originalInput || '原始输入'}</p>
             </div>
         </div>
     `;
@@ -565,9 +565,9 @@ function showUploadModal() {
         const file = fileInput.files[0];
         if (file) {
             window.parseXLSFile(file).then(jsonData => {
-                const message = window.processUploadedCourses(jsonData, calendar);
-                updateChat(message);
-                hideAllModals();
+                const parseResult = window.processUploadedCourses(jsonData);
+                hideAllModals(); // 关闭上传模态框
+                showParseResult(parseResult);
             });
         } else {
             alert('请选择一个文件');
@@ -581,6 +581,64 @@ function showUploadModal() {
             hideAllModals();
         }
     };
+}
+
+function showParseResult(parseResult) {
+    const modalContent = document.createElement('div');
+    modalContent.innerHTML = `
+        <h3>解析结果</h3>
+        <p>共解析到 ${parseResult.coursesCount} 门课程：</p>
+        <div style="max-height: 300px; overflow-y: auto;">
+            <ul>
+                ${parseResult.coursesList.map(course => `
+                    <li>
+                        ${course.name} - 
+                        ${course.day} 
+                        ${course.time}
+                        ${course.location}
+                        (第${course.weeks}周)
+                    </li>
+                `).join('')}
+            </ul>
+        </div>
+        <p>是否确认添加这些课程到日历？</p>
+    `;
+
+    showCustomModal(
+        '课程表解析结果',
+        modalContent,
+        () => {
+            const events = window.convertToCalendarEvents(parseResult.coursesList);
+            events.forEach(event => calendar.addEvent(event));
+            calendar.render();
+            hideAllModals();
+            updateChat('课程表已成功添加');
+        },
+        hideAllModals
+    );
+}
+
+function showCustomModal(title, content, onConfirm, onCancel) {
+    const modal = document.getElementById('customModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const confirmBtn = document.getElementById('modalConfirm');
+    const cancelBtn = document.getElementById('modalCancel');
+
+    modalTitle.textContent = title;
+    modalBody.innerHTML = '';
+    modalBody.appendChild(content);
+
+    confirmBtn.onclick = () => {
+        onConfirm();
+        hideAllModals();
+    };
+    cancelBtn.onclick = () => {
+        onCancel();
+        hideAllModals();
+    };
+
+    modal.style.display = 'block';
 }
 
 function hideAllModals() {

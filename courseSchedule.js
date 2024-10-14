@@ -110,7 +110,7 @@ function calculateDuration(startTime, endTime) {
 
 function convertToCalendarEvents(courses) {
     const events = [];
-    const startDate = new Date('2024-08-26');
+    const startDate = new Date('2024-08-26'); // 假设学期开始日期为2024年8月26日，请根据实际情况调整
 
     const dayMapping = {
         '星期一': 0, '星期二': 1, '星期三': 2, '星期四': 3, 
@@ -123,10 +123,21 @@ function convertToCalendarEvents(courses) {
             console.error('Invalid day:', course.day);
             return;
         }
-        const [startHour, startMinute] = course.startTime.split(':').map(Number);
-        const [endHour, endMinute] = course.endTime.split(':').map(Number);
+        
+        // 检查 course.time 是否存在并且包含 '-'
+        if (!course.time || !course.time.includes('-')) {
+            console.error('Invalid time format for course:', course);
+            return;
+        }
 
-        course.weeks.forEach(week => {
+        const [startTime, endTime] = course.time.split('-');
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const [endHour, endMinute] = endTime.split(':').map(Number);
+
+        // 检查 course.weeks 是否为字符串，如果是，则分割它
+        const weeks = typeof course.weeks === 'string' ? course.weeks.split(',').map(Number) : course.weeks;
+
+        weeks.forEach(week => {
             const eventStartDate = new Date(startDate);
             eventStartDate.setDate(startDate.getDate() + (week - 1) * 7 + dayIndex);
             eventStartDate.setHours(startHour, startMinute, 0, 0);
@@ -135,14 +146,12 @@ function convertToCalendarEvents(courses) {
             eventEndDate.setHours(endHour, endMinute, 0, 0);
 
             events.push({
-                title: `${course.name}\n${course.teacher}\n${course.location}`,
+                title: `${course.name}\n${course.location}`,
                 start: eventStartDate,
                 end: eventEndDate,
                 allDay: false,
                 extendedProps: {
-                    location: course.location,
-                    teacher: course.teacher,
-                    duration: course.duration
+                    location: course.location
                 }
             });
         });
@@ -151,14 +160,25 @@ function convertToCalendarEvents(courses) {
     return events;
 }
 
-function processUploadedCourses(jsonData, calendar) {
+function prepareParseResult(courses) {
+    return {
+        coursesCount: courses.length,
+        coursesList: courses.map(course => ({
+            name: course.name,
+            day: course.day,
+            time: `${course.startTime}-${course.endTime}`,
+            location: course.location,
+            weeks: course.weeks.join(',')
+        }))
+    };
+}
+
+function processUploadedCourses(jsonData) {
     const courses = extractCourses(jsonData);
-    const events = convertToCalendarEvents(courses);
-    events.forEach(event => calendar.addEvent(event));
-    calendar.render();
-    return '课程表已成功添加';
+    return prepareParseResult(courses);
 }
 
 // 在文件末尾添加：
 window.parseXLSFile = parseXLSFile;
 window.processUploadedCourses = processUploadedCourses;
+window.convertToCalendarEvents = convertToCalendarEvents;
