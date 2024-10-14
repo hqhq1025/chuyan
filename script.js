@@ -31,7 +31,7 @@ function initializeCalendar() {
         eventClick: function(info) {
             showEventDetails(info.event);
         },
-        events: [], // 初始化一个的事件数
+        events: [], // 初始化一个事件数
         displayEventTime: true, // 显示事件时间
         eventTimeFormat: { // 自定义时间格式
             hour: 'numeric',
@@ -570,7 +570,6 @@ function parseXLSFile(file) {
 
 function extractCourses(jsonData) {
     const courses = [];
-    const daysOfWeek = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
     const timeSlots = {
         '1': { start: '08:00', end: '08:45' },
         '2': { start: '08:50', end: '09:35' },
@@ -588,7 +587,10 @@ function extractCourses(jsonData) {
         '14': { start: '20:10', end: '20:55' }
     };
     
-    for (let i = 2; i < jsonData.length; i++) {
+    // 从表头获取星期信息
+    const daysOfWeek = jsonData[2].slice(1, 8);
+    
+    for (let i = 3; i < jsonData.length; i++) {
         const row = jsonData[i];
         if (row[0] && typeof row[0] === 'string' && row[0].includes('-')) {
             const slotInfo = row[0].split('\n');
@@ -621,20 +623,39 @@ function extractCourses(jsonData) {
 
 function extractWeeks(weekString) {
     const weeks = [];
-    const ranges = weekString.match(/\d+(?:-\d+)?/g);
-    if (ranges) {
-        ranges.forEach(range => {
-            if (range.includes('-')) {
-                const [start, end] = range.split('-').map(Number);
+    // 匹配单周、双周、连续周和单独周
+    const patterns = [
+        /(\d+)-(\d+)(?:\[单周\]|\[双周\])?/g,  // 匹配 X-Y 周 [可能带单双周]
+        /(\d+)(?:,(\d+))*(?:\[单周\]|\[双周\])?/g,  // 匹配单独的周或逗号分隔的多个周 [可能带单双周]
+    ];
+
+    patterns.forEach(pattern => {
+        let match;
+        while ((match = pattern.exec(weekString)) !== null) {
+            if (match[2] && match[2].includes(',')) {
+                // 处理逗号分隔的多个周
+                match[2].split(',').forEach(week => weeks.push(parseInt(week)));
+            } else if (match[2]) {
+                // 处理连续的周
+                const start = parseInt(match[1]);
+                const end = parseInt(match[2]);
                 for (let i = start; i <= end; i++) {
-                    weeks.push(i);
+                    if (weekString.includes('[单周]') && i % 2 === 1) {
+                        weeks.push(i);
+                    } else if (weekString.includes('[双周]') && i % 2 === 0) {
+                        weeks.push(i);
+                    } else if (!weekString.includes('[单周]') && !weekString.includes('[双周]')) {
+                        weeks.push(i);
+                    }
                 }
             } else {
-                weeks.push(Number(range));
+                // 处理单独的周
+                weeks.push(parseInt(match[1]));
             }
-        });
-    }
-    return weeks;
+        }
+    });
+
+    return [...new Set(weeks)].sort((a, b) => a - b);  // 去重并排序
 }
 
 function calculateDuration(startTime, endTime) {
@@ -646,10 +667,19 @@ function calculateDuration(startTime, endTime) {
 
 function convertToCalendarEvents(courses) {
     const events = [];
-    const startDate = new Date('2024-09-02'); // 假设学期开始日期为2024年9月2日，请根据实际情况调整
+    const startDate = new Date('2024-08-26'); // 设置为第一周的开始日期
+
+    const dayMapping = {
+        '星期一': 0, '星期二': 1, '星期三': 2, '星期四': 3, 
+        '星期五': 4, '星期六': 5, '星期日': 6
+    };
 
     courses.forEach(course => {
-        const dayIndex = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'].indexOf(course.day);
+        const dayIndex = dayMapping[course.day];
+        if (dayIndex === undefined) {
+            console.error('Invalid day:', course.day);
+            return;
+        }
         const [startHour, startMinute] = course.startTime.split(':').map(Number);
         const [endHour, endMinute] = course.endTime.split(':').map(Number);
 
