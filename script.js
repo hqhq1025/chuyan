@@ -40,9 +40,19 @@ function initializeCalendar() {
             hour: 'numeric',
             minute: '2-digit',
             meridiem: 'short'
+        },
+        eventAdd: function(info) {
+            saveEvents(); // 在添加事件时保存
+        },
+        eventChange: function(info) {
+            saveEvents(); // 在修改事件时保存
+        },
+        eventRemove: function(info) {
+            saveEvents(); // 在删除事件时保存
         }
     });
     calendar.render();
+    loadEvents(); // 加载保存的事件
     console.log('Calendar initialized:', calendar);
 }
 
@@ -407,9 +417,8 @@ function addEventToCalendar(taskInfo) {
     try {
         const addedEvent = calendar.addEvent(eventData);
         console.log('Event added successfully:', addedEvent);
-        calendar.gotoDate(taskInfo.start); // 跳转到事件日期
         calendar.render();
-        console.log('Calendar events after adding:', calendar.getEvents());
+        saveEvents(); // 保存新添加的事件
         updateChat(`已添加${taskInfo.isReminder ? '提醒' : '日程'}：${taskInfo.title}`);
     } catch (error) {
         console.error('Failed to add event:', error);
@@ -611,6 +620,7 @@ function showParseResult(parseResult) {
             const events = window.convertToCalendarEvents(parseResult.coursesList);
             events.forEach(event => calendar.addEvent(event));
             calendar.render();
+            saveEvents(); // 保存导入的课程
             hideAllModals();
             updateChat('课程表已成功添加');
         },
@@ -644,4 +654,33 @@ function showCustomModal(title, content, onConfirm, onCancel) {
 function hideAllModals() {
     const modals = document.querySelectorAll('.modal');
     modals.forEach(modal => modal.style.display = 'none');
+}
+
+// 保存日程到 localStorage
+function saveEvents() {
+    const events = calendar.getEvents().map(event => ({
+        title: event.title,
+        start: event.start.toISOString(),
+        end: event.end ? event.end.toISOString() : null,
+        allDay: event.allDay,
+        extendedProps: event.extendedProps
+    }));
+    localStorage.setItem('calendarEvents', JSON.stringify(events));
+}
+
+// 从 localStorage 加载日程
+function loadEvents() {
+    const savedEvents = localStorage.getItem('calendarEvents');
+    if (savedEvents) {
+        const events = JSON.parse(savedEvents);
+        events.forEach(event => {
+            calendar.addEvent({
+                title: event.title,
+                start: new Date(event.start),
+                end: event.end ? new Date(event.end) : null,
+                allDay: event.allDay,
+                extendedProps: event.extendedProps
+            });
+        });
+    }
 }
