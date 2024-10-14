@@ -37,6 +37,8 @@ function extractCourses(jsonData) {
     
     const daysOfWeek = jsonData[2].slice(1, 8);
     
+    let tempCourses = [];
+    
     for (let i = 3; i < jsonData.length; i++) {
         const row = jsonData[i];
         if (row[0] && typeof row[0] === 'string' && row[0].includes('-')) {
@@ -50,7 +52,7 @@ function extractCourses(jsonData) {
                     if (courseInfo.length >= 3) {
                         const weekInfo = courseInfo[courseInfo.length - 3];
                         const weeks = extractWeeks(weekInfo);
-                        courses.push({
+                        tempCourses.push({
                             name: courseInfo[0],
                             teacher: courseInfo[1],
                             day: daysOfWeek[j-1],
@@ -58,13 +60,43 @@ function extractCourses(jsonData) {
                             endTime: timeSlot.end,
                             location: courseInfo[courseInfo.length - 2],
                             weeks: weeks,
-                            duration: calculateDuration(timeSlot.start, timeSlot.end)
+                            slotNumber: parseInt(slotNumber)
                         });
                     }
                 }
             }
         }
     }
+    
+    // 合并连续的同一门课
+    tempCourses.sort((a, b) => a.day.localeCompare(b.day) || a.slotNumber - b.slotNumber);
+    
+    let currentCourse = null;
+    for (const course of tempCourses) {
+        if (!currentCourse || 
+            currentCourse.name !== course.name || 
+            currentCourse.day !== course.day || 
+            currentCourse.slotNumber + 1 !== course.slotNumber) {
+            if (currentCourse) {
+                courses.push(currentCourse);
+            }
+            currentCourse = { ...course };
+        } else {
+            currentCourse.endTime = course.endTime;
+            currentCourse.slotNumber = course.slotNumber;
+            // 合并周次
+            currentCourse.weeks = [...new Set([...currentCourse.weeks, ...course.weeks])].sort((a, b) => a - b);
+        }
+    }
+    if (currentCourse) {
+        courses.push(currentCourse);
+    }
+    
+    // 计算持续时间
+    courses.forEach(course => {
+        course.duration = calculateDuration(course.startTime, course.endTime);
+    });
+    
     return courses;
 }
 
