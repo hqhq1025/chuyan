@@ -3,10 +3,29 @@
 
 let notificationDate = new Date(); // 默认为当前日期
 let calendar;
+let isMemoryModeEnabled = true;
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeCalendar();
     // ... 其他初始化代码 ...
+
+    const memoryModeToggle = document.getElementById('memoryModeToggle');
+    if (memoryModeToggle) {
+        memoryModeToggle.addEventListener('change', toggleMemoryMode);
+        // 初始化时检查本地存储中的设置
+        const savedMemoryMode = localStorage.getItem('memoryModeEnabled');
+        if (savedMemoryMode !== null) {
+            isMemoryModeEnabled = JSON.parse(savedMemoryMode);
+            memoryModeToggle.checked = isMemoryModeEnabled;
+        }
+    } else {
+        console.error('记忆模式开关未找到');
+    }
+
+    // 如果记忆模式开启，则加载保存的事件
+    if (isMemoryModeEnabled) {
+        loadEvents();
+    }
 
     // 添加课程表按钮的事件监听器
     const addCourseScheduleBtn = document.getElementById('addCourseScheduleBtn');
@@ -42,17 +61,16 @@ function initializeCalendar() {
             meridiem: 'short'
         },
         eventAdd: function(info) {
-            saveEvents(); // 在添加事件时保存
+            if (isMemoryModeEnabled) saveEvents();
         },
         eventChange: function(info) {
-            saveEvents(); // 在修改事件时保存
+            if (isMemoryModeEnabled) saveEvents();
         },
         eventRemove: function(info) {
-            saveEvents(); // 在删除事件时保存
+            if (isMemoryModeEnabled) saveEvents();
         }
     });
     calendar.render();
-    loadEvents(); // 加载保存的事件
     console.log('Calendar initialized:', calendar);
 }
 
@@ -418,7 +436,7 @@ function addEventToCalendar(taskInfo) {
         const addedEvent = calendar.addEvent(eventData);
         console.log('Event added successfully:', addedEvent);
         calendar.render();
-        saveEvents(); // 保存新添加的事件
+        if (isMemoryModeEnabled) saveEvents();
         updateChat(`已添加${taskInfo.isReminder ? '提醒' : '日程'}：${taskInfo.title}`);
     } catch (error) {
         console.error('Failed to add event:', error);
@@ -620,7 +638,7 @@ function showParseResult(parseResult) {
             const events = window.convertToCalendarEvents(parseResult.coursesList);
             events.forEach(event => calendar.addEvent(event));
             calendar.render();
-            saveEvents(); // 保存导入的课程
+            if (isMemoryModeEnabled) saveEvents();
             hideAllModals();
             updateChat('课程表已成功添加');
         },
@@ -656,31 +674,46 @@ function hideAllModals() {
     modals.forEach(modal => modal.style.display = 'none');
 }
 
-// 保存日程到 localStorage
+// 修改 saveEvents 函数
 function saveEvents() {
-    const events = calendar.getEvents().map(event => ({
-        title: event.title,
-        start: event.start.toISOString(),
-        end: event.end ? event.end.toISOString() : null,
-        allDay: event.allDay,
-        extendedProps: event.extendedProps
-    }));
-    localStorage.setItem('calendarEvents', JSON.stringify(events));
+    if (isMemoryModeEnabled) {
+        const events = calendar.getEvents().map(event => ({
+            title: event.title,
+            start: event.start.toISOString(),
+            end: event.end ? event.end.toISOString() : null,
+            allDay: event.allDay,
+            extendedProps: event.extendedProps
+        }));
+        localStorage.setItem('calendarEvents', JSON.stringify(events));
+    }
 }
 
-// 从 localStorage 加载日程
+// 修改 loadEvents 函数
 function loadEvents() {
-    const savedEvents = localStorage.getItem('calendarEvents');
-    if (savedEvents) {
-        const events = JSON.parse(savedEvents);
-        events.forEach(event => {
-            calendar.addEvent({
-                title: event.title,
-                start: new Date(event.start),
-                end: event.end ? new Date(event.end) : null,
-                allDay: event.allDay,
-                extendedProps: event.extendedProps
+    if (isMemoryModeEnabled) {
+        const savedEvents = localStorage.getItem('calendarEvents');
+        if (savedEvents) {
+            const events = JSON.parse(savedEvents);
+            events.forEach(event => {
+                calendar.addEvent({
+                    title: event.title,
+                    start: new Date(event.start),
+                    end: event.end ? new Date(event.end) : null,
+                    allDay: event.allDay,
+                    extendedProps: event.extendedProps
+                });
             });
-        });
+        }
+    }
+}
+
+function toggleMemoryMode() {
+    isMemoryModeEnabled = !isMemoryModeEnabled;
+    localStorage.setItem('memoryModeEnabled', JSON.stringify(isMemoryModeEnabled));
+    
+    if (isMemoryModeEnabled) {
+        saveEvents();
+    } else {
+        localStorage.removeItem('calendarEvents');
     }
 }
