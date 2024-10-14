@@ -682,22 +682,25 @@ function showUploadModal() {
     };
 }
 
+// 修改 showParseResult 函数
 function showParseResult(courses) {
     const modalContent = document.createElement('div');
     modalContent.innerHTML = `
         <h3>解析结果</h3>
         <p>共解析到 ${courses.length} 门课程：</p>
-        <ul>
-            ${courses.map(course => `
-                <li>
-                    ${course.name} - 
-                    ${course.day} 
-                    ${course.startTime}
-                    ${course.location}
-                    (第${course.weeks.join(',')}周)
-                </li>
-            `).join('')}
-        </ul>
+        <div style="max-height: 300px; overflow-y: auto;">
+            <ul>
+                ${courses.map(course => `
+                    <li>
+                        ${course.name} - 
+                        ${course.day} 
+                        ${course.startTime}
+                        ${course.location}
+                        (第${course.weeks.join(',')}周)
+                    </li>
+                `).join('')}
+            </ul>
+        </div>
         <p>是否确认添加这些课程到日历？</p>
     `;
 
@@ -715,6 +718,7 @@ function showParseResult(courses) {
     );
 }
 
+// 修改 showCustomModal 函数
 function showCustomModal(title, content, onConfirm, onCancel) {
     const modal = document.getElementById('customModal');
     const modalTitle = document.getElementById('modalTitle');
@@ -726,12 +730,19 @@ function showCustomModal(title, content, onConfirm, onCancel) {
     modalBody.innerHTML = '';
     modalBody.appendChild(content);
 
-    confirmBtn.onclick = onConfirm;
-    cancelBtn.onclick = onCancel;
+    confirmBtn.onclick = () => {
+        onConfirm();
+        modal.style.display = 'none';
+    };
+    cancelBtn.onclick = () => {
+        onCancel();
+        modal.style.display = 'none';
+    };
 
     modal.style.display = 'block';
 }
 
+// 修改 hideCustomModal 函数
 function hideCustomModal() {
     const modal = document.getElementById('customModal');
     modal.style.display = 'none';
