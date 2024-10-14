@@ -31,7 +31,7 @@ function initializeCalendar() {
         eventClick: function(info) {
             showEventDetails(info.event);
         },
-        events: [], // 初始化一个���的事件数组
+        events: [], // 初始化一个的事件数
         displayEventTime: true, // 显示事件时间
         eventTimeFormat: { // 自定义时间格式
             hour: 'numeric',
@@ -267,7 +267,7 @@ function parseChineseDateTime(dateTimeStr, referenceDate = new Date()) {
                 hours = 0;
             }
         } else if (hours < 12 && !dateTimeStr.includes('上午') && !dateTimeStr.includes('凌晨')) {
-            // 如果没有明确指定上午，且小于12点，默认为下午
+            // 如果没有明���指定上午，且小于12点，默认为下午
             hours += 12;
         }
 
@@ -370,13 +370,13 @@ async function showConfirmDialog(schedules) {
     });
 }
 
-// 修改 addEventToCalendar 函数
+// 修�� addEventToCalendar 函数
 function addEventToCalendar(taskInfo) {
     console.log('Adding event to calendar:', taskInfo);
 
     if (!taskInfo.start) {
         console.error('无效的开始时间:', taskInfo);
-        updateChat(`添加日���失败：${taskInfo.title} - 无效的开始时间`);
+        updateChat(`添加日��败：${taskInfo.title} - 无效的开始时间`);
         return;
     }
 
@@ -545,7 +545,7 @@ function getRecurrenceText(rrule) {
     }
 }
 
-// 添加入样式模板功能
+// 加入样式模板功能
 window.setInput = function(sample) {
     userInput.value = sample;
 }
@@ -558,8 +558,8 @@ function parseXLSFile(file) {
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
             resolve(jsonData);
         };
@@ -570,20 +570,32 @@ function parseXLSFile(file) {
 
 function extractCourses(jsonData) {
     const courses = [];
-    // 假设第一行是表头，从第二行开始解析
+    const coursePattern = /^(.+)\n(\S+)\n(\S+)-(\S+)\n(.+)$/;
+
     for (let i = 1; i < jsonData.length; i++) {
         const row = jsonData[i];
-        if (row.length >= 5) { // 确保行有足够的列
-            courses.push({
-                name: row[0],
-                day: row[1],
-                startTime: row[2],
-                endTime: row[3],
-                location: row[4]
-            });
+        for (let j = 1; j < row.length; j++) {
+            const cellContent = row[j];
+            if (cellContent && typeof cellContent === 'string') {
+                const match = cellContent.match(coursePattern);
+                if (match) {
+                    courses.push({
+                        name: match[1].trim(),
+                        day: getDayOfWeek(j),
+                        startTime: match[3],
+                        endTime: match[4],
+                        location: match[5].trim()
+                    });
+                }
+            }
         }
     }
     return courses;
+}
+
+function getDayOfWeek(columnIndex) {
+    const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    return days[columnIndex - 1] || '未知';
 }
 
 function convertToCalendarEvents(courses) {
@@ -593,7 +605,7 @@ function convertToCalendarEvents(courses) {
         const courseDate = getNextOccurrence(dayIndex);
         
         return {
-            title: course.name,
+            title: `${course.name}\n${course.location}`,
             start: `${courseDate.toISOString().split('T')[0]}T${course.startTime}:00`,
             end: `${courseDate.toISOString().split('T')[0]}T${course.endTime}:00`,
             location: course.location,
@@ -700,7 +712,11 @@ function showUploadModal() {
     uploadBtn.onclick = function() {
         const file = fileInput.files[0];
         if (file) {
-            parseXLSFile(file).then(processUploadedCourses);
+            modal.style.display = 'none'; // 关闭上传窗口
+            parseXLSFile(file).then(jsonData => {
+                const courses = extractCourses(jsonData);
+                showParseResult(courses);
+            });
         } else {
             alert('请选择一个文件');
         }
@@ -717,11 +733,60 @@ function showUploadModal() {
     };
 }
 
-function processUploadedCourses(jsonData) {
-    const courses = extractCourses(jsonData);
+function showParseResult(courses) {
+    const modalContent = document.createElement('div');
+    modalContent.innerHTML = `
+        <h3>解析结果</h3>
+        <p>共解析到 ${courses.length} 门课程：</p>
+        <ul>
+            ${courses.map(course => `
+                <li>
+                    ${course.name} - 
+                    ${course.day} 
+                    ${course.startTime}-${course.endTime} 
+                    ${course.location}
+                </li>
+            `).join('')}
+        </ul>
+        <p>是否确认添加这些课程到日历？</p>
+    `;
+
+    showCustomModal(
+        '课程表解析结果',
+        modalContent,
+        () => {
+            processUploadedCourses(courses);
+            hideCustomModal();
+        },
+        hideCustomModal
+    );
+}
+
+function showCustomModal(title, content, onConfirm, onCancel) {
+    const modal = document.getElementById('customModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const confirmBtn = document.getElementById('modalConfirm');
+    const cancelBtn = document.getElementById('modalCancel');
+
+    modalTitle.textContent = title;
+    modalBody.innerHTML = '';
+    modalBody.appendChild(content);
+
+    confirmBtn.onclick = onConfirm;
+    cancelBtn.onclick = onCancel;
+
+    modal.style.display = 'block';
+}
+
+function hideCustomModal() {
+    const modal = document.getElementById('customModal');
+    modal.style.display = 'none';
+}
+
+function processUploadedCourses(courses) {
     const events = convertToCalendarEvents(courses);
     events.forEach(event => calendar.addEvent(event));
     calendar.render();
-    document.getElementById('uploadModal').style.display = 'none';
     updateChat('课程表已成功添加');
 }
