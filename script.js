@@ -1,3 +1,6 @@
+// 在文件开头添加导入语句
+// import { parseXLSFile, processUploadedCourses } from './courseSchedule.js';
+
 let notificationDate = new Date(); // 默认为当前日期
 let calendar;
 
@@ -550,173 +553,6 @@ window.setInput = function(sample) {
     userInput.value = sample;
 }
 
-// 文件末尾添加以下函数
-
-function parseXLSFile(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-            resolve(jsonData);
-        };
-        reader.onerror = reject;
-        reader.readAsArrayBuffer(file);
-    });
-}
-
-function extractCourses(jsonData) {
-    const courses = [];
-    const timeSlots = {
-        '1': { start: '08:00', end: '08:45' },
-        '2': { start: '08:50', end: '09:35' },
-        '3': { start: '09:50', end: '10:35' },
-        '4': { start: '10:40', end: '11:25' },
-        '5': { start: '11:30', end: '12:15' },
-        '6': { start: '13:00', end: '13:45' },
-        '7': { start: '13:50', end: '14:35' },
-        '8': { start: '14:45', end: '15:30' },
-        '9': { start: '15:40', end: '16:25' },
-        '10': { start: '16:35', end: '17:20' },
-        '11': { start: '17:25', end: '18:10' },
-        '12': { start: '18:30', end: '19:15' },
-        '13': { start: '19:20', end: '20:05' },
-        '14': { start: '20:10', end: '20:55' }
-    };
-    
-    // 从表头获取星期信息
-    const daysOfWeek = jsonData[2].slice(1, 8);
-    
-    for (let i = 3; i < jsonData.length; i++) {
-        const row = jsonData[i];
-        if (row[0] && typeof row[0] === 'string' && row[0].includes('-')) {
-            const slotInfo = row[0].split('\n');
-            const slotNumber = slotInfo[0];
-            const timeSlot = timeSlots[slotNumber];
-            
-            for (let j = 1; j < 8; j++) {
-                if (row[j] && typeof row[j] === 'string') {
-                    const courseInfo = row[j].split('\n').filter(item => item.trim() !== '');
-                    if (courseInfo.length >= 3) {
-                        const weekInfo = courseInfo[courseInfo.length - 3].match(/(\d+)(?:-(\d+))?(?:\[单周\]|\[双周\])?/);
-                        const weeks = weekInfo ? extractWeeks(weekInfo[0]) : [];
-                        courses.push({
-                            name: courseInfo[0],
-                            teacher: courseInfo[1],
-                            day: daysOfWeek[j-1],
-                            startTime: timeSlot.start,
-                            endTime: timeSlot.end,
-                            location: courseInfo[courseInfo.length - 2],
-                            weeks: weeks,
-                            duration: calculateDuration(timeSlot.start, timeSlot.end)
-                        });
-                    }
-                }
-            }
-        }
-    }
-    return courses;
-}
-
-function extractWeeks(weekString) {
-    const weeks = [];
-    // 匹配单周、双周、连续周和单独周
-    const patterns = [
-        /(\d+)-(\d+)(?:\[单周\]|\[双周\])?/g,  // 匹配 X-Y 周 [可能带单双周]
-        /(\d+)(?:,(\d+))*(?:\[单周\]|\[双周\])?/g,  // 匹配单独的周或逗号分隔的多个周 [可能带单双周]
-    ];
-
-    patterns.forEach(pattern => {
-        let match;
-        while ((match = pattern.exec(weekString)) !== null) {
-            if (match[2] && match[2].includes(',')) {
-                // 处理逗号分隔的多个周
-                match[2].split(',').forEach(week => weeks.push(parseInt(week)));
-            } else if (match[2]) {
-                // 处理连续的周
-                const start = parseInt(match[1]);
-                const end = parseInt(match[2]);
-                for (let i = start; i <= end; i++) {
-                    if (weekString.includes('[单周]') && i % 2 === 1) {
-                        weeks.push(i);
-                    } else if (weekString.includes('[双周]') && i % 2 === 0) {
-                        weeks.push(i);
-                    } else if (!weekString.includes('[单周]') && !weekString.includes('[双周]')) {
-                        weeks.push(i);
-                    }
-                }
-            } else {
-                // 处理单独的周
-                weeks.push(parseInt(match[1]));
-            }
-        }
-    });
-
-    return [...new Set(weeks)].sort((a, b) => a - b);  // 去重并排序
-}
-
-function calculateDuration(startTime, endTime) {
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const [endHour, endMinute] = endTime.split(':').map(Number);
-    const durationMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
-    return `${Math.floor(durationMinutes / 60)}小时${durationMinutes % 60}分钟`;
-}
-
-function convertToCalendarEvents(courses) {
-    const events = [];
-    const startDate = new Date('2024-08-26'); // 设置为第一周的开始日期
-
-    const dayMapping = {
-        '星期一': 0, '星期二': 1, '星期三': 2, '星期四': 3, 
-        '星期五': 4, '星期六': 5, '星期日': 6
-    };
-
-    courses.forEach(course => {
-        const dayIndex = dayMapping[course.day];
-        if (dayIndex === undefined) {
-            console.error('Invalid day:', course.day);
-            return;
-        }
-        const [startHour, startMinute] = course.startTime.split(':').map(Number);
-        const [endHour, endMinute] = course.endTime.split(':').map(Number);
-
-        course.weeks.forEach(week => {
-            const eventStartDate = new Date(startDate);
-            eventStartDate.setDate(startDate.getDate() + (week - 1) * 7 + dayIndex);
-            eventStartDate.setHours(startHour, startMinute, 0, 0);
-
-            const eventEndDate = new Date(eventStartDate);
-            eventEndDate.setHours(endHour, endMinute, 0, 0);
-
-            events.push({
-                title: `${course.name}\n${course.teacher}\n${course.location}`,
-                start: eventStartDate,
-                end: eventEndDate,
-                allDay: false,
-                extendedProps: {
-                    location: course.location,
-                    teacher: course.teacher,
-                    duration: course.duration
-                }
-            });
-        });
-    });
-
-    return events;
-}
-
-function processUploadedCourses(jsonData) {
-    const courses = extractCourses(jsonData);
-    const events = convertToCalendarEvents(courses);
-    events.forEach(event => calendar.addEvent(event));
-    calendar.render();
-    updateChat('课程表已成功添加');
-}
-
-// 修改 showUploadModal 函数
 function showUploadModal() {
     const modal = document.getElementById('uploadModal');
     const fileInput = document.getElementById('xlsFileInput');
@@ -728,88 +564,26 @@ function showUploadModal() {
     uploadBtn.onclick = function() {
         const file = fileInput.files[0];
         if (file) {
-            parseXLSFile(file).then(jsonData => {
-                const courses = extractCourses(jsonData);
-                showParseResult(courses);
+            window.parseXLSFile(file).then(jsonData => {
+                const message = window.processUploadedCourses(jsonData, calendar);
+                updateChat(message);
+                hideAllModals();
             });
         } else {
             alert('请选择一个文件');
         }
     };
 
-    cancelBtn.onclick = function() {
-        modal.style.display = 'none';
-    };
+    cancelBtn.onclick = hideAllModals;
 
     window.onclick = function(event) {
         if (event.target == modal) {
-            modal.style.display = 'none';
+            hideAllModals();
         }
     };
 }
 
-// 修改 showParseResult 函数
-function showParseResult(courses) {
-    const modalContent = document.createElement('div');
-    modalContent.innerHTML = `
-        <h3>解析结果</h3>
-        <p>共解析到 ${courses.length} 门课程：</p>
-        <div style="max-height: 300px; overflow-y: auto;">
-            <ul>
-                ${courses.map(course => `
-                    <li>
-                        ${course.name} - 
-                        ${course.day} 
-                        ${course.startTime}
-                        ${course.location}
-                        (第${course.weeks.join(',')}周)
-                    </li>
-                `).join('')}
-            </ul>
-        </div>
-        <p>是否确认添加这些课程到日历？</p>
-    `;
-
-    showCustomModal(
-        '课程表解析结果',
-        modalContent,
-        () => {
-            const events = convertToCalendarEvents(courses);
-            events.forEach(event => calendar.addEvent(event));
-            calendar.render();
-            hideCustomModal();
-            updateChat('课程表已成功添加');
-        },
-        hideCustomModal
-    );
-}
-
-// 修改 showCustomModal 函数
-function showCustomModal(title, content, onConfirm, onCancel) {
-    const modal = document.getElementById('customModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalBody = document.getElementById('modalBody');
-    const confirmBtn = document.getElementById('modalConfirm');
-    const cancelBtn = document.getElementById('modalCancel');
-
-    modalTitle.textContent = title;
-    modalBody.innerHTML = '';
-    modalBody.appendChild(content);
-
-    confirmBtn.onclick = () => {
-        onConfirm();
-        modal.style.display = 'none';
-    };
-    cancelBtn.onclick = () => {
-        onCancel();
-        modal.style.display = 'none';
-    };
-
-    modal.style.display = 'block';
-}
-
-// 修改 hideCustomModal 函数
-function hideCustomModal() {
-    const modal = document.getElementById('customModal');
-    modal.style.display = 'none';
+function hideAllModals() {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => modal.style.display = 'none');
 }
