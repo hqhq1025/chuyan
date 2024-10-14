@@ -72,6 +72,7 @@ async function callAI(userInput) {
 
 // 修改 processInput 函数
 async function processInput() {
+    notificationDate = new Date(); // 更新 notificationDate
     const input = userInput.value.trim();
     if (input) {
         updateChat(`用户输入: ${input}`);
@@ -121,7 +122,7 @@ function parseAIResponse(aiResponse, originalInput) {
             const jsonResponse = JSON.parse(cleanResponse);
             return parseJsonResponse(jsonResponse, originalInput);
         } catch (jsonError) {
-            // 如果JSON解析失败，���试解析Markdown格式
+            // 如果JSON解析失败，试解析Markdown格式
             return parseMarkdownResponse(cleanResponse, originalInput);
         }
     } catch (error) {
@@ -159,7 +160,7 @@ function parseJsonResponse(jsonResponse, originalInput) {
         reminders = jsonResponse.提醒事项;
     }
 
-    console.log('解析后的���程:', schedules);
+    console.log('解析后的程:', schedules);
     console.log('解析后的提醒事项:', reminders);
     return { schedules, reminders };
 }
@@ -225,26 +226,52 @@ function parseChineseDateTime(dateTimeStr, referenceDate = new Date()) {
     const result = new Date(referenceDate);
     const currentYear = referenceDate.getFullYear();
 
-    // 解析日期
-    const dateMatch = dateTimeStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
-    if (dateMatch) {
-        result.setFullYear(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
+    // 处理相对日期
+    if (dateTimeStr.includes('今天') || dateTimeStr.includes('今日')) {
+        // 保持当前日期不变
+    } else if (dateTimeStr.includes('明天')) {
+        result.setDate(result.getDate() + 1);
+    } else if (dateTimeStr.includes('后天')) {
+        result.setDate(result.getDate() + 2);
+    } else if (dateTimeStr.includes('下周')) {
+        result.setDate(result.getDate() + 7);
     } else {
-        console.error('无法解析日期:', dateTimeStr);
-        return null;
+        // 解析具体日期
+        const dateMatch = dateTimeStr.match(/(\d{4}年)?(\d{1,2})月(\d{1,2})[日号]/);
+        if (dateMatch) {
+            const year = dateMatch[1] ? parseInt(dateMatch[1]) : currentYear;
+            const month = parseInt(dateMatch[2]) - 1; // JavaScript中月份是0-11
+            const day = parseInt(dateMatch[3]);
+            result.setFullYear(year, month, day);
+        }
     }
 
     // 解析时间
-    const timeMatch = dateTimeStr.match(/(\d{1,2}):(\d{2})/);
+    const timeMatch = dateTimeStr.match(/(\d{1,2})([:：](\d{2}))?\s*(上午|下午|晚上|凌晨)?/);
     if (timeMatch) {
-        result.setHours(parseInt(timeMatch[1]), parseInt(timeMatch[2]), 0, 0);
+        let hours = parseInt(timeMatch[1]);
+        const minutes = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
+        const period = timeMatch[4];
+
+        if (period === '下午' && hours < 12) {
+            hours += 12;
+        } else if (period === '晚上') {
+            hours = hours === 12 ? 0 : hours + 12;
+        } else if (period === '凌晨' && hours === 12) {
+            hours = 0;
+        } else if (!period && hours < 12 && hours !== 0) {
+            // 如果没有指定上午/下午，默认下午
+            hours += 12;
+        }
+
+        result.setHours(hours, minutes, 0, 0);
     } else {
         // 如果没有指定时间，默认设置为当天的上午9点
         result.setHours(9, 0, 0, 0);
     }
 
     console.log('解析后的日期时间:', result);
-    return isValidDate(result) ? result : null;
+    return result;
 }
 
 // 修改 calculateEndTime 函数
@@ -626,14 +653,16 @@ function resolveTimeConflicts(taskInfo) {
 // 解析对日期
 function parseRelativeDate(input) {
     const today = new Date(notificationDate);
-    if (input.includes('明天')) {
+    if (input.includes('今天') || input.includes('今日')) {
+        return new Date(today);
+    } else if (input.includes('明天')) {
         return new Date(today.setDate(today.getDate() + 1));
     } else if (input.includes('后天')) {
         return new Date(today.setDate(today.getDate() + 2));
     } else if (input.includes('下周')) {
         return new Date(today.setDate(today.getDate() + 7));
     }
-    // 添更多相对期解析逻辑...
+    // 添加更多相对日期解析逻辑...
     return null;
 }
 
