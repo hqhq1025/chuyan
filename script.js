@@ -267,7 +267,7 @@ function parseChineseDateTime(dateTimeStr, referenceDate = new Date()) {
                 hours = 0;
             }
         } else if (hours < 12 && !dateTimeStr.includes('上午') && !dateTimeStr.includes('凌晨')) {
-            // 如果没有明���指定上午，且小于12点，默认为下午
+            // 如果没有明指定上午，且小于12点，默认为下午
             hours += 12;
         }
 
@@ -370,13 +370,13 @@ async function showConfirmDialog(schedules) {
     });
 }
 
-// 修�� addEventToCalendar 函数
+// 修 addEventToCalendar 函数
 function addEventToCalendar(taskInfo) {
     console.log('Adding event to calendar:', taskInfo);
 
     if (!taskInfo.start) {
         console.error('无效的开始时间:', taskInfo);
-        updateChat(`添加日��败：${taskInfo.title} - 无效的开始时间`);
+        updateChat(`添加日败：${taskInfo.title} - 无效的开始时间`);
         return;
     }
 
@@ -558,8 +558,8 @@ function parseXLSFile(file) {
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
             resolve(jsonData);
         };
@@ -570,22 +570,26 @@ function parseXLSFile(file) {
 
 function extractCourses(jsonData) {
     const courses = [];
-    const coursePattern = /^(.+)\n(\S+)\n(\S+)-(\S+)\n(.+)$/;
-
-    for (let i = 1; i < jsonData.length; i++) {
+    const daysOfWeek = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+    
+    for (let i = 2; i < jsonData.length; i++) {
         const row = jsonData[i];
-        for (let j = 1; j < row.length; j++) {
-            const cellContent = row[j];
-            if (cellContent && typeof cellContent === 'string') {
-                const match = cellContent.match(coursePattern);
-                if (match) {
-                    courses.push({
-                        name: match[1].trim(),
-                        day: getDayOfWeek(j),
-                        startTime: match[3],
-                        endTime: match[4],
-                        location: match[5].trim()
-                    });
+        if (row[0] && typeof row[0] === 'string' && row[0].includes('-')) {
+            const timeSlot = row[0].split('\n');
+            const startTime = timeSlot[1].split('-')[0];
+            
+            for (let j = 1; j < 8; j++) {
+                if (row[j] && typeof row[j] === 'string') {
+                    const courseInfo = row[j].split('\n').filter(item => item.trim() !== '');
+                    if (courseInfo.length >= 3) {
+                        courses.push({
+                            name: courseInfo[0],
+                            day: daysOfWeek[j-1],
+                            startTime: startTime,
+                            location: courseInfo[courseInfo.length - 2],
+                            weeks: extractWeeks(courseInfo[courseInfo.length - 3])
+                        });
+                    }
                 }
             }
         }
@@ -593,114 +597,60 @@ function extractCourses(jsonData) {
     return courses;
 }
 
-function getDayOfWeek(columnIndex) {
-    const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-    return days[columnIndex - 1] || '未知';
+function extractWeeks(weekString) {
+    const weekRanges = weekString.match(/\d+-\d+|\d+/g);
+    const weeks = [];
+    if (weekRanges) {
+        weekRanges.forEach(range => {
+            if (range.includes('-')) {
+                const [start, end] = range.split('-').map(Number);
+                for (let i = start; i <= end; i++) {
+                    weeks.push(i);
+                }
+            } else {
+                weeks.push(Number(range));
+            }
+        });
+    }
+    return weeks;
 }
 
 function convertToCalendarEvents(courses) {
-    const daysOfWeek = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-    return courses.map(course => {
-        const dayIndex = daysOfWeek.indexOf(course.day);
-        const courseDate = getNextOccurrence(dayIndex);
-        
-        return {
-            title: `${course.name}\n${course.location}`,
-            start: `${courseDate.toISOString().split('T')[0]}T${course.startTime}:00`,
-            end: `${courseDate.toISOString().split('T')[0]}T${course.endTime}:00`,
-            location: course.location,
-            rrule: {
-                freq: 'weekly',
-                interval: 1,
-                byweekday: [dayIndex]
-            }
-        };
+    const events = [];
+    const startDate = new Date('2024-09-02'); // 假设学期开始日期为2024年9月2日，请根据实际情况调整
+
+    courses.forEach(course => {
+        const dayIndex = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'].indexOf(course.day);
+        const [hours, minutes] = course.startTime.split(':').map(Number);
+
+        course.weeks.forEach(week => {
+            const eventDate = new Date(startDate);
+            eventDate.setDate(startDate.getDate() + (week - 1) * 7 + dayIndex);
+            eventDate.setHours(hours, minutes, 0, 0);
+
+            events.push({
+                title: `${course.name}\n${course.location}`,
+                start: eventDate,
+                allDay: false,
+                extendedProps: {
+                    location: course.location
+                }
+            });
+        });
     });
+
+    return events;
 }
 
-// 修改showCustomPrompt函数以支持HTML内容
-function showCustomPrompt(title, message, callback, defaultValue = '') {
-    const modal = document.getElementById('customModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalBody = document.getElementById('modalBody');
-    const confirmBtn = document.getElementById('modalConfirm');
-    const cancelBtn = document.getElementById('modalCancel');
-
-    modalTitle.textContent = title;
-    modalBody.innerHTML = message;
-
-    modal.style.display = 'block';
-
-    confirmBtn.onclick = function() {
-        modal.style.display = 'none';
-        callback(null);
-    };
-
-    cancelBtn.style.display = 'none';
-
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
-            callback(null);
-        }
-    };
+function processUploadedCourses(jsonData) {
+    const courses = extractCourses(jsonData);
+    const events = convertToCalendarEvents(courses);
+    events.forEach(event => calendar.addEvent(event));
+    calendar.render();
+    updateChat('课程表已成功添加');
 }
 
-// 添加解决时间冲突的函数
-function resolveTimeConflicts(taskInfo) {
-    const relativeDate = parseRelativeDate(taskInfo.originalInput);
-    const absoluteDate = parseAbsoluteDate(taskInfo.originalInput);
-
-    if (relativeDate && absoluteDate) {
-        if (Math.abs(relativeDate - absoluteDate) > 24 * 60 * 60 * 1000) { // 如果差异超过一天
-            taskInfo.timeConflict = {
-                relativeDate: relativeDate,
-                absoluteDate: absoluteDate
-            };
-        } else {
-            taskInfo.start = new Date(absoluteDate);
-        }
-    } else if (relativeDate) {
-        taskInfo.start = new Date(relativeDate);
-    } else if (absoluteDate) {
-        taskInfo.start = new Date(absoluteDate);
-    }
-
-    return taskInfo;
-}
-
-// 解析对日期
-function parseRelativeDate(input) {
-    const today = new Date(notificationDate);
-    if (input.includes('今天') || input.includes('今日')) {
-        return new Date(today);
-    } else if (input.includes('明天')) {
-        return new Date(today.setDate(today.getDate() + 1));
-    } else if (input.includes('后天')) {
-        return new Date(today.setDate(today.getDate() + 2));
-    } else if (input.includes('下周')) {
-        return new Date(today.setDate(today.getDate() + 7));
-    }
-    // 添加更多相对日期解析逻辑...
-    return null;
-}
-
-// 解析绝对日期
-function parseAbsoluteDate(input) {
-    const dateMatch = input.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
-    if (dateMatch) {
-        return new Date(dateMatch[1], dateMatch[2] - 1, dateMatch[3]);
-    }
-    // 添加更多绝对日期解析逻辑...
-    return null;
-}
-
-// 添加这个函数来检查日期是否有效
-function isValidDate(date) {
-    return date instanceof Date && !isNaN(date);
-}
-
-// 添加这些新函数
+// 修改 showUploadModal 函数
 function showUploadModal() {
     const modal = document.getElementById('uploadModal');
     const fileInput = document.getElementById('xlsFileInput');
@@ -712,7 +662,6 @@ function showUploadModal() {
     uploadBtn.onclick = function() {
         const file = fileInput.files[0];
         if (file) {
-            modal.style.display = 'none'; // 关闭上传窗口
             parseXLSFile(file).then(jsonData => {
                 const courses = extractCourses(jsonData);
                 showParseResult(courses);
@@ -743,8 +692,9 @@ function showParseResult(courses) {
                 <li>
                     ${course.name} - 
                     ${course.day} 
-                    ${course.startTime}-${course.endTime} 
+                    ${course.startTime}
                     ${course.location}
+                    (第${course.weeks.join(',')}周)
                 </li>
             `).join('')}
         </ul>
@@ -755,8 +705,11 @@ function showParseResult(courses) {
         '课程表解析结果',
         modalContent,
         () => {
-            processUploadedCourses(courses);
+            const events = convertToCalendarEvents(courses);
+            events.forEach(event => calendar.addEvent(event));
+            calendar.render();
             hideCustomModal();
+            updateChat('课程表已成功添加');
         },
         hideCustomModal
     );
@@ -782,11 +735,4 @@ function showCustomModal(title, content, onConfirm, onCancel) {
 function hideCustomModal() {
     const modal = document.getElementById('customModal');
     modal.style.display = 'none';
-}
-
-function processUploadedCourses(courses) {
-    const events = convertToCalendarEvents(courses);
-    events.forEach(event => calendar.addEvent(event));
-    calendar.render();
-    updateChat('课程表已成功添加');
 }
