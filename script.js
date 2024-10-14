@@ -116,11 +116,8 @@ async function processInput() {
             console.log('Parsed reminders:', reminders);
 
             if (schedules.length > 0) {
-                const selectedSchedules = await showConfirmDialog(schedules);
-                console.log('Selected schedules after confirmation:', selectedSchedules);
-                selectedSchedules.forEach(taskInfo => {
-                    addEventToCalendar(taskInfo);
-                });
+                await showConfirmDialog(schedules);
+                // 移除这里的 addEventToCalendar 调用
             } else {
                 updateChat('无法从AI回复中提取完整的任务信息，请尝试更明确的表述。');
             }
@@ -219,7 +216,7 @@ function parseMarkdownResponse(markdownResponse, originalInput) {
         } else if (line.startsWith('1. 待办事项：')) {
             currentSchedule.title = line.substring('1. 待办事项：'.length).trim();
         } else if (line.startsWith('2. 开始时间：')) {
-            currentSchedule.start = parseChineseDateTime(line.substring('2. 开始时间：'.length).trim());
+            currentSchedule.start = parseChineseDateTime(line.substring('2. 开始时��：'.length).trim());
         } else if (line.startsWith('3. 预计时长：')) {
             const durationStr = line.substring('3. 预计时长：'.length).trim();
             if (durationStr !== '未知' && currentSchedule.start) {
@@ -330,12 +327,9 @@ async function showConfirmDialog(schedules) {
             
             console.log('Selected schedules:', selectedSchedules);
             
-            // 立即添加事件到日历
             selectedSchedules.forEach(taskInfo => {
                 addEventToCalendar(taskInfo);
             });
-            
-            calendar.render(); // 确保在添加所有事件后重新渲染日历
             
             resolve(selectedSchedules);
         };
