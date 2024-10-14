@@ -571,23 +571,45 @@ function parseXLSFile(file) {
 function extractCourses(jsonData) {
     const courses = [];
     const daysOfWeek = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+    const timeSlots = {
+        '1': { start: '08:00', end: '08:45' },
+        '2': { start: '08:50', end: '09:35' },
+        '3': { start: '09:50', end: '10:35' },
+        '4': { start: '10:40', end: '11:25' },
+        '5': { start: '11:30', end: '12:15' },
+        '6': { start: '13:00', end: '13:45' },
+        '7': { start: '13:50', end: '14:35' },
+        '8': { start: '14:45', end: '15:30' },
+        '9': { start: '15:40', end: '16:25' },
+        '10': { start: '16:35', end: '17:20' },
+        '11': { start: '17:25', end: '18:10' },
+        '12': { start: '18:30', end: '19:15' },
+        '13': { start: '19:20', end: '20:05' },
+        '14': { start: '20:10', end: '20:55' }
+    };
     
     for (let i = 2; i < jsonData.length; i++) {
         const row = jsonData[i];
         if (row[0] && typeof row[0] === 'string' && row[0].includes('-')) {
-            const timeSlot = row[0].split('\n');
-            const startTime = timeSlot[1].split('-')[0];
+            const slotInfo = row[0].split('\n');
+            const slotNumber = slotInfo[0];
+            const timeSlot = timeSlots[slotNumber];
             
             for (let j = 1; j < 8; j++) {
                 if (row[j] && typeof row[j] === 'string') {
                     const courseInfo = row[j].split('\n').filter(item => item.trim() !== '');
                     if (courseInfo.length >= 3) {
+                        const weekInfo = courseInfo[courseInfo.length - 3].match(/(\d+)(?:-(\d+))?(?:\[单周\]|\[双周\])?/);
+                        const weeks = weekInfo ? extractWeeks(weekInfo[0]) : [];
                         courses.push({
                             name: courseInfo[0],
+                            teacher: courseInfo[1],
                             day: daysOfWeek[j-1],
-                            startTime: startTime,
+                            startTime: timeSlot.start,
+                            endTime: timeSlot.end,
                             location: courseInfo[courseInfo.length - 2],
-                            weeks: extractWeeks(courseInfo[courseInfo.length - 3])
+                            weeks: weeks,
+                            duration: calculateDuration(timeSlot.start, timeSlot.end)
                         });
                     }
                 }
@@ -598,10 +620,10 @@ function extractCourses(jsonData) {
 }
 
 function extractWeeks(weekString) {
-    const weekRanges = weekString.match(/\d+-\d+|\d+/g);
     const weeks = [];
-    if (weekRanges) {
-        weekRanges.forEach(range => {
+    const ranges = weekString.match(/\d+(?:-\d+)?/g);
+    if (ranges) {
+        ranges.forEach(range => {
             if (range.includes('-')) {
                 const [start, end] = range.split('-').map(Number);
                 for (let i = start; i <= end; i++) {
@@ -615,25 +637,39 @@ function extractWeeks(weekString) {
     return weeks;
 }
 
+function calculateDuration(startTime, endTime) {
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    const durationMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+    return `${Math.floor(durationMinutes / 60)}小时${durationMinutes % 60}分钟`;
+}
+
 function convertToCalendarEvents(courses) {
     const events = [];
     const startDate = new Date('2024-09-02'); // 假设学期开始日期为2024年9月2日，请根据实际情况调整
 
     courses.forEach(course => {
         const dayIndex = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'].indexOf(course.day);
-        const [hours, minutes] = course.startTime.split(':').map(Number);
+        const [startHour, startMinute] = course.startTime.split(':').map(Number);
+        const [endHour, endMinute] = course.endTime.split(':').map(Number);
 
         course.weeks.forEach(week => {
-            const eventDate = new Date(startDate);
-            eventDate.setDate(startDate.getDate() + (week - 1) * 7 + dayIndex);
-            eventDate.setHours(hours, minutes, 0, 0);
+            const eventStartDate = new Date(startDate);
+            eventStartDate.setDate(startDate.getDate() + (week - 1) * 7 + dayIndex);
+            eventStartDate.setHours(startHour, startMinute, 0, 0);
+
+            const eventEndDate = new Date(eventStartDate);
+            eventEndDate.setHours(endHour, endMinute, 0, 0);
 
             events.push({
-                title: `${course.name}\n${course.location}`,
-                start: eventDate,
+                title: `${course.name}\n${course.teacher}\n${course.location}`,
+                start: eventStartDate,
+                end: eventEndDate,
                 allDay: false,
                 extendedProps: {
-                    location: course.location
+                    location: course.location,
+                    teacher: course.teacher,
+                    duration: course.duration
                 }
             });
         });
