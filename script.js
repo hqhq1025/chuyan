@@ -110,7 +110,7 @@ async function processInput() {
         try {
             const aiResponse = await callAI(input);
             updateChat(`AI回复: ${aiResponse}`);
-            const { schedules, reminders } = parseAIResponse(aiResponse, input); // 传递原始输入
+            const { schedules, reminders } = parseAIResponse(aiResponse, input);
             
             console.log('Parsed schedules:', schedules);
             console.log('Parsed reminders:', reminders);
@@ -118,6 +118,9 @@ async function processInput() {
             if (schedules.length > 0) {
                 const selectedSchedules = await showConfirmDialog(schedules);
                 console.log('Selected schedules after confirmation:', selectedSchedules);
+                selectedSchedules.forEach(taskInfo => {
+                    addEventToCalendar(taskInfo);
+                });
             } else {
                 updateChat('无法从AI回复中提取完整的任务信息，请尝试更明确的表述。');
             }
@@ -142,20 +145,15 @@ function getNextOccurrence(dayOfWeek, referenceDate = new Date()) {
     return nextDate;
 }
 
-// 修改 parseAIResponse 函数
+// 确保 parseAIResponse 函数正确实现
 function parseAIResponse(aiResponse, originalInput) {
     try {
         // 移除可能存在的 Markdown 代码块标记
         let cleanResponse = aiResponse.replace(/```json\n?/, '').replace(/```\n?$/, '');
         
         // 尝试解析为JSON
-        try {
-            const jsonResponse = JSON.parse(cleanResponse);
-            return parseJsonResponse(jsonResponse, originalInput);
-        } catch (jsonError) {
-            // 如果JSON解析失败，试解析Markdown格式
-            return parseMarkdownResponse(cleanResponse, originalInput);
-        }
+        const jsonResponse = JSON.parse(cleanResponse);
+        return parseJsonResponse(jsonResponse, originalInput);
     } catch (error) {
         console.error('解析AI响应时出错:', error);
         return { schedules: [], reminders: [] };
@@ -170,7 +168,7 @@ function parseJsonResponse(jsonResponse, originalInput) {
     if (jsonResponse.日程) {
         jsonResponse.日程.forEach(event => {
             const startDate = parseChineseDateTime(event.开始时间);
-            if (isValidDate(startDate)) {
+            if (startDate) {
                 schedules.push({
                     title: event.待办事项,
                     start: startDate,
@@ -179,7 +177,7 @@ function parseJsonResponse(jsonResponse, originalInput) {
                     recurrence: event.重复频率,
                     notes: event.备注,
                     isReminder: false,
-                    originalInput: originalInput // 使用原始用户输入
+                    originalInput: originalInput
                 });
             } else {
                 console.error('无效的日期时间:', event.开始时间);
@@ -191,7 +189,7 @@ function parseJsonResponse(jsonResponse, originalInput) {
         reminders = jsonResponse.提醒事项;
     }
 
-    console.log('解析后的程:', schedules);
+    console.log('解析后的日程:', schedules);
     console.log('解析后的提醒事项:', reminders);
     return { schedules, reminders };
 }
@@ -254,65 +252,20 @@ function parseChineseDateTime(dateTimeStr, referenceDate = new Date()) {
 
     console.log('正在解析日期时间:', dateTimeStr);
 
-    const result = new Date(referenceDate);
-    const currentYear = referenceDate.getFullYear();
-
-    // 处理相对日期
-    if (dateTimeStr.includes('今天') || dateTimeStr.includes('今日')) {
-        // 保持当前日期不变
-    } else if (dateTimeStr.includes('明天')) {
-        result.setDate(result.getDate() + 1);
-    } else if (dateTimeStr.includes('后天')) {
-        result.setDate(result.getDate() + 2);
-    } else if (dateTimeStr.includes('下周')) {
-        result.setDate(result.getDate() + 7);
-    } else {
-        // 解析具体日期
-        const dateMatch = dateTimeStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})[日号]/);
-        if (dateMatch) {
-            result.setFullYear(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
-        }
+    // 直接解析 AI 返回的日期时间格式
+    const dateTimeParts = dateTimeStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日\s+(\d{1,2}):(\d{2})/);
+    if (dateTimeParts) {
+        const [_, year, month, day, hour, minute] = dateTimeParts;
+        const result = new Date(year, month - 1, day, hour, minute);
+        console.log('解析后的日期时间:', result);
+        return result;
     }
 
-    // 解析时间
-    const timeMatch = dateTimeStr.match(/(\d{1,2})[:：](\d{2})|(\d{1,2})(点|时)(?:(\d{1,2})分?)?/);
-    if (timeMatch) {
-        let hours, minutes;
-        if (timeMatch[1] && timeMatch[2]) {
-            // 处理 HH:mm 格式
-            hours = parseInt(timeMatch[1]);
-            minutes = parseInt(timeMatch[2]);
-        } else {
-            // 处理 X点Y分 或 X时Y分 格式
-            hours = parseInt(timeMatch[3]);
-            minutes = timeMatch[5] ? parseInt(timeMatch[5]) : 0;
-        }
-
-        // 处理时间段
-        const periodMatch = dateTimeStr.match(/(上午|下午|晚上|凌晨)/);
-        if (periodMatch) {
-            const period = periodMatch[1];
-            if ((period === '下午' || period === '晚上') && hours < 12) {
-                hours += 12;
-            } else if (period === '凌晨' && hours === 12) {
-                hours = 0;
-            }
-        } else if (hours < 12 && !dateTimeStr.includes('上午') && !dateTimeStr.includes('凌晨')) {
-            // 如果没有明指定上午，且小于12点，默认为下午
-            hours += 12;
-        }
-
-        result.setHours(hours, minutes, 0, 0);
-    } else {
-        // 如果没有指定时间，默认设置为当天的上午9点
-        result.setHours(9, 0, 0, 0);
-    }
-
-    console.log('解析后的日期时间:', result);
-    return result;
+    console.error('无法解析日期时间:', dateTimeStr);
+    return null;
 }
 
-// 修改 calculateEndTime 函数
+// 添加 calculateEndTime 函数（如果还没有的话）
 function calculateEndTime(startTime, duration) {
     if (!startTime || !duration) {
         console.warn('计算结束时间失败: 开始时间或持续时间无效');
@@ -716,4 +669,9 @@ function toggleMemoryMode() {
     } else {
         localStorage.removeItem('calendarEvents');
     }
+}
+
+// 确保 isValidDate 函数存在
+function isValidDate(date) {
+    return date instanceof Date && !isNaN(date);
 }
