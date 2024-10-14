@@ -31,7 +31,7 @@ function initializeCalendar() {
         eventClick: function(info) {
             showEventDetails(info.event);
         },
-        events: [], // 初始化一个空的事件数组
+        events: [], // 初始化一个���的事件数组
         displayEventTime: true, // 显示事件时间
         eventTimeFormat: { // 自定义时间格式
             hour: 'numeric',
@@ -237,30 +237,37 @@ function parseChineseDateTime(dateTimeStr, referenceDate = new Date()) {
         result.setDate(result.getDate() + 7);
     } else {
         // 解析具体日期
-        const dateMatch = dateTimeStr.match(/(\d{4}年)?(\d{1,2})月(\d{1,2})[日号]/);
+        const dateMatch = dateTimeStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})[日号]/);
         if (dateMatch) {
-            const year = dateMatch[1] ? parseInt(dateMatch[1]) : currentYear;
-            const month = parseInt(dateMatch[2]) - 1; // JavaScript中月份是0-11
-            const day = parseInt(dateMatch[3]);
-            result.setFullYear(year, month, day);
+            result.setFullYear(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]));
         }
     }
 
     // 解析时间
-    const timeMatch = dateTimeStr.match(/(\d{1,2})([:：](\d{2}))?\s*(上午|下午|晚上|凌晨)?/);
+    const timeMatch = dateTimeStr.match(/(\d{1,2})[:：](\d{2})|(\d{1,2})(点|时)(?:(\d{1,2})分?)?/);
     if (timeMatch) {
-        let hours = parseInt(timeMatch[1]);
-        const minutes = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
-        const period = timeMatch[4];
+        let hours, minutes;
+        if (timeMatch[1] && timeMatch[2]) {
+            // 处理 HH:mm 格式
+            hours = parseInt(timeMatch[1]);
+            minutes = parseInt(timeMatch[2]);
+        } else {
+            // 处理 X点Y分 或 X时Y分 格式
+            hours = parseInt(timeMatch[3]);
+            minutes = timeMatch[5] ? parseInt(timeMatch[5]) : 0;
+        }
 
-        if (period === '下午' && hours < 12) {
-            hours += 12;
-        } else if (period === '晚上') {
-            hours = hours === 12 ? 0 : hours + 12;
-        } else if (period === '凌晨' && hours === 12) {
-            hours = 0;
-        } else if (!period && hours < 12 && hours !== 0) {
-            // 如果没有指定上午/下午，默认下午
+        // 处理时间段
+        const periodMatch = dateTimeStr.match(/(上午|下午|晚上|凌晨)/);
+        if (periodMatch) {
+            const period = periodMatch[1];
+            if ((period === '下午' || period === '晚上') && hours < 12) {
+                hours += 12;
+            } else if (period === '凌晨' && hours === 12) {
+                hours = 0;
+            }
+        } else if (hours < 12 && !dateTimeStr.includes('上午') && !dateTimeStr.includes('凌晨')) {
+            // 如果没有明确指定上午，且小于12点，默认为下午
             hours += 12;
         }
 
@@ -369,7 +376,7 @@ function addEventToCalendar(taskInfo) {
 
     if (!taskInfo.start) {
         console.error('无效的开始时间:', taskInfo);
-        updateChat(`添加日程失败：${taskInfo.title} - 无效的开始时间`);
+        updateChat(`添加日���失败：${taskInfo.title} - 无效的开始时间`);
         return;
     }
 
