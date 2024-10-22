@@ -412,3 +412,92 @@ h2 {
         font-size: 14px; /* 小屏幕上段落字体大小 */
     }
 }
+
+.modal-content {
+    background-color: #ffffff;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.event-details p {
+    margin: 10px 0;
+    font-size: 16px;
+    color: #555;
+}
+
+.event-details i {
+    margin-right: 10px;
+    color: #0071e3;
+}
+
+.original-input-container {
+    margin-top: 20px;
+}
+
+.toggle-btn, .delete-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+}
+
+.toggle-btn {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.toggle-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.delete-btn {
+    background-color: #ff4d4f;
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: #ff7875;
+}
+
+.original-input-text {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #eee;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #666;
+}
+
+#modalCancel {
+    background-color: #f0f0f0;
+    color: #333;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+#modalCancel:hover {
+    background-color: #e0e0e0;
+}

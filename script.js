@@ -480,20 +480,21 @@ function showEventDetails(event) {
     const confirmBtn = document.getElementById('modalConfirm');
     const cancelBtn = document.getElementById('modalCancel');
 
-    modalTitle.textContent = '事件详情';
+    modalTitle.textContent = event.title;
     modalBody.innerHTML = `
-        <p><strong>标题:</strong> ${event.title}</p>
-        <p><strong>开始时间:</strong> ${event.start.toLocaleString()}</p>
-        <p><strong>结束时间:</strong> ${event.end ? event.end.toLocaleString() : '未指定'}</p>
-        <p><strong>重复频率:</strong> ${event.rrule ? getRecurrenceText(event.rrule) : '不重复'}</p>
-        <p><strong>备注:</strong> ${event.extendedProps.notes || '无'}</p>
+        <div class="event-details">
+            <p><i class="fas fa-clock"></i> <strong>开始时间:</strong> ${event.start.toLocaleString()}</p>
+            <p><i class="fas fa-hourglass-end"></i> <strong>结束时间:</strong> ${event.end ? event.end.toLocaleString() : '未指定'}</p>
+            <p><i class="fas fa-redo"></i> <strong>重复频率:</strong> ${event.rrule ? getRecurrenceText(event.rrule) : '不重复'}</p>
+            <p><i class="fas fa-sticky-note"></i> <strong>备注:</strong> ${event.extendedProps.notes || '无'}</p>
+        </div>
         <div class="original-input-container">
-            <button id="toggleOriginalInput" class="toggle-btn">显示原文</button>
+            <button id="toggleOriginalInput" class="toggle-btn"><i class="fas fa-file-alt"></i> 显示原文</button>
             <div id="originalInputText" class="original-input-text" style="display: none;">
                 <p>${event.extendedProps.originalInput || '无原始输入'}</p>
             </div>
         </div>
-        <button id="deleteEventBtn" class="delete-btn">删除此事件</button>
+        <button id="deleteEventBtn" class="delete-btn"><i class="fas fa-trash-alt"></i> 删除此事件</button>
     `;
 
     const toggleOriginalInput = document.getElementById('toggleOriginalInput');
@@ -503,19 +504,19 @@ function showEventDetails(event) {
     toggleOriginalInput.onclick = function() {
         if (originalInputText.style.display === 'none') {
             originalInputText.style.display = 'block';
-            toggleOriginalInput.textContent = '隐藏原文';
+            toggleOriginalInput.innerHTML = '<i class="fas fa-file-alt"></i> 隐藏原文';
         } else {
             originalInputText.style.display = 'none';
-            toggleOriginalInput.textContent = '显示原文';
+            toggleOriginalInput.innerHTML = '<i class="fas fa-file-alt"></i> 显示原文';
         }
     };
 
     deleteEventBtn.onclick = function() {
         const confirmed = confirm('您确定要删除此事件吗？');
         if (confirmed) {
-            event.remove(); // 从日历中删除事件
+            event.remove();
             updateChat(`已删除事件：${event.title}`);
-            modal.style.display = 'none'; // 关闭模态框
+            modal.style.display = 'none';
         }
     };
 
@@ -526,15 +527,11 @@ function showEventDetails(event) {
 
     cancelBtn.onclick = function() {
         modal.style.display = 'none';
-        confirmBtn.style.display = 'inline-block';
-        cancelBtn.textContent = '取消';
     };
 
     window.onclick = function(event) {
         if (event.target == modal) {
             modal.style.display = 'none';
-            confirmBtn.style.display = 'inline-block';
-            cancelBtn.textContent = '取消';
         }
     };
 }
