@@ -166,29 +166,15 @@ function parseJsonResponse(jsonResponse, originalInput) {
         jsonResponse.日程.forEach(event => {
             const startDate = parseChineseDateTime(event.开始时间);
             if (startDate) {
-                let recurrenceRule = null;
-                if (event.重复频率 !== '不重复') {
-                    const dayOfWeek = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'].indexOf(event.开始时间.split(' ')[0]);
-                    if (dayOfWeek !== -1) {
-                        const nextOccurrence = getNextOccurrence(dayOfWeek);
-                        startDate.setFullYear(nextOccurrence.getFullYear(), nextOccurrence.getMonth(), nextOccurrence.getDate());
-                    }
-                    recurrenceRule = {
-                        freq: getFrequency(event.重复频率),
-                        interval: 1,
-                        dtstart: startDate
-                    };
-                }
                 schedules.push({
                     title: event.待办事项,
                     start: startDate,
                     end: event.预计时长 !== '未知' ? calculateEndTime(startDate, event.预计时长) : null,
                     allDay: false,
-                    rrule: recurrenceRule,
-                    extendedProps: {
-                        notes: event.备注,
-                        originalInput: originalInput
-                    }
+                    recurrence: event.重复频率,
+                    notes: event.备注,
+                    isReminder: false,
+                    originalInput: originalInput
                 });
             } else {
                 console.error('无效的日期时间:', event.开始时间);
@@ -497,30 +483,34 @@ function showEventDetails(event) {
         <button id="deleteEventBtn" class="delete-btn"><i class="fas fa-trash-alt"></i> 删除此事件</button>
     `;
 
+    modal.style.display = 'block';
+
     const toggleOriginalInput = document.getElementById('toggleOriginalInput');
     const originalInputText = document.getElementById('originalInputText');
     const deleteEventBtn = document.getElementById('deleteEventBtn');
 
-    toggleOriginalInput.onclick = function() {
-        if (originalInputText.style.display === 'none') {
-            originalInputText.style.display = 'block';
-            toggleOriginalInput.innerHTML = '<i class="fas fa-file-alt"></i> 隐藏原文';
-        } else {
-            originalInputText.style.display = 'none';
-            toggleOriginalInput.innerHTML = '<i class="fas fa-file-alt"></i> 显示原文';
-        }
-    };
+    if (toggleOriginalInput) {
+        toggleOriginalInput.onclick = function() {
+            if (originalInputText.style.display === 'none') {
+                originalInputText.style.display = 'block';
+                this.innerHTML = '<i class="fas fa-file-alt"></i> 隐藏原文';
+            } else {
+                originalInputText.style.display = 'none';
+                this.innerHTML = '<i class="fas fa-file-alt"></i> 显示原文';
+            }
+        };
+    }
 
-    deleteEventBtn.onclick = function() {
-        const confirmed = confirm('您确定要删除此事件吗？');
-        if (confirmed) {
-            event.remove();
-            updateChat(`已删除事件：${event.title}`);
-            modal.style.display = 'none';
-        }
-    };
-
-    modal.style.display = 'block';
+    if (deleteEventBtn) {
+        deleteEventBtn.onclick = function() {
+            const confirmed = confirm('您确定要删除此事件吗？');
+            if (confirmed) {
+                event.remove();
+                updateChat(`已删除事件：${event.title}`);
+                modal.style.display = 'none';
+            }
+        };
+    }
 
     confirmBtn.style.display = 'none';
     cancelBtn.textContent = '关闭';
@@ -529,8 +519,8 @@ function showEventDetails(event) {
         modal.style.display = 'none';
     };
 
-    window.onclick = function(event) {
-        if (event.target == modal) {
+    window.onclick = function(e) {
+        if (e.target == modal) {
             modal.style.display = 'none';
         }
     };
