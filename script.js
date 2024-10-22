@@ -37,10 +37,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const settingsBtn = document.getElementById('settingsBtn');
     if (settingsBtn) {
-        settingsBtn.addEventListener('click', openSettings);
+        settingsBtn.addEventListener('click', () => {
+            window.location.href = 'settings.html';
+        });
     } else {
         console.error('设置按钮未找到');
     }
+
+    // 添加检查登录状态的函数
+    function checkLoginStatus() {
+        const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+        // 这里可以根据登录状态来显示或隐藏某些元素
+        console.log('用户登录状态:', isLoggedIn);
+    }
+
+    // 在页面加载时检查登录状态
+    checkLoginStatus();
 });
 
 function initializeCalendar() {
@@ -510,7 +522,7 @@ function showEventDetails(event) {
 
     if (deleteEventBtn) {
         deleteEventBtn.onclick = function() {
-            const confirmed = confirm('您确定要删除此事件吗？');
+            const confirmed = confirm('您确定要除此事件吗？');
             if (confirmed) {
                 event.remove();
                 updateChat(`已删除事件：${event.title}`);
@@ -707,3 +719,4 @@ function openSettings() {
     // 未来可以使用以下代码跳转到设置页面
     // window.location.href = 'settings.html';
 }
+
