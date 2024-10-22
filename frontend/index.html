@@ -76,6 +76,8 @@
     <script src="courseSchedule.js"></script>
     <script src="script.js"></script>
     <script>
+        const API_URL = 'https://your-backend-api.vercel.app'; // 替换为你的实际后端 API URL
+
         async function uploadCourseSchedule() {
             const fileInput = document.getElementById('xlsFileInput');
             const file = fileInput.files[0];
@@ -86,7 +88,7 @@
 
             try {
                 const jsonData = await parseXLSFile(file);
-                const response = await fetch('http://localhost:8080/api/courses', {
+                const response = await fetch(`${API_URL}/api/courses`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -108,7 +110,7 @@
 
         async function fetchCourses() {
             try {
-                const response = await fetch('http://localhost:8080/api/courses');
+                const response = await fetch(`${API_URL}/api/courses`);
                 if (!response.ok) {
                     throw new Error('获取课程数据失败');
                 }
