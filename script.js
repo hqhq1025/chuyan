@@ -178,6 +178,19 @@ function parseJsonResponse(jsonResponse, originalInput) {
                 });
             } else {
                 console.error('无效的日期时间:', event.开始时间);
+                // 可以选择添加一个默认的日期时间，或者跳过这个事件
+                // 例如：使用当前时间作为默认值
+                const defaultDate = new Date();
+                schedules.push({
+                    title: event.待办事项,
+                    start: defaultDate,
+                    end: null,
+                    allDay: false,
+                    recurrence: event.重复频率,
+                    notes: event.备注 + ' (时间解析错误)',
+                    isReminder: false,
+                    originalInput: originalInput
+                });
             }
         });
     }
@@ -216,7 +229,7 @@ function parseMarkdownResponse(markdownResponse, originalInput) {
         } else if (line.startsWith('1. 待办事项：')) {
             currentSchedule.title = line.substring('1. 待办事项：'.length).trim();
         } else if (line.startsWith('2. 开始时间：')) {
-            currentSchedule.start = parseChineseDateTime(line.substring('2. 开始：'.length).trim());
+            currentSchedule.start = parseChineseDateTime(line.substring('2. 开始'.length).trim());
         } else if (line.startsWith('3. 预计时长：')) {
             const durationStr = line.substring('3. 预计时长：'.length).trim();
             if (durationStr !== '未知' && currentSchedule.start) {
@@ -249,10 +262,19 @@ function parseChineseDateTime(dateTimeStr, referenceDate = new Date()) {
 
     console.log('正在解析日期时间:', dateTimeStr);
 
-    // 直接解析 AI 返回的日期时间格式
-    const dateTimeParts = dateTimeStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日\s+(\d{1,2}):(\d{2})/);
+    // 直接解析 AI 返回的日期时间格式 (YYYY-MM-DD HH:mm)
+    const dateTimeParts = dateTimeStr.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
     if (dateTimeParts) {
         const [_, year, month, day, hour, minute] = dateTimeParts;
+        const result = new Date(year, month - 1, day, hour, minute);
+        console.log('解析后的日期时间:', result);
+        return result;
+    }
+
+    // 如果上面的格式不匹配，尝试解析 "YYYY年MM月DD日 HH:mm" 格式
+    const chineseDateTimeParts = dateTimeStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日\s+(\d{1,2}):(\d{2})/);
+    if (chineseDateTimeParts) {
+        const [_, year, month, day, hour, minute] = chineseDateTimeParts;
         const result = new Date(year, month - 1, day, hour, minute);
         console.log('解析后的日期时间:', result);
         return result;
@@ -449,7 +471,7 @@ function addEventPrompt(start, end, allDay) {
     };
 }
 
-// 修�� showEventDetails 函数
+// 修 showEventDetails 函数
 function showEventDetails(event) {
     const modal = document.getElementById('customModal');
     const modalTitle = document.getElementById('modalTitle');
