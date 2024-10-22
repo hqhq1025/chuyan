@@ -338,6 +338,10 @@ async function showConfirmDialog(schedules) {
 
         modal.style.display = 'block';
 
+        // 确保确认按钮可见
+        confirmBtn.style.display = 'inline-block';
+        confirmBtn.textContent = '确认';
+
         confirmBtn.onclick = function() {
             const selectedSchedules = [];
             const checkboxes = modalBody.querySelectorAll('.schedule-checkbox');
@@ -632,13 +636,17 @@ function showCustomModal(title, content, onConfirm, onCancel) {
     modalBody.innerHTML = '';
     modalBody.appendChild(content);
 
+    // 确保确认按钮可见
+    confirmBtn.style.display = 'inline-block';
+    confirmBtn.textContent = '确认';
+
     confirmBtn.onclick = () => {
         onConfirm();
-        hideAllModals();
+        modal.style.display = 'none';
     };
     cancelBtn.onclick = () => {
         onCancel();
-        hideAllModals();
+        modal.style.display = 'none';
     };
 
     modal.style.display = 'block';
