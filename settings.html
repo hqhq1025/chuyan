@@ -10,21 +10,44 @@
 <body>
     <div class="settings-container">
         <h1>设置</h1>
-        <div class="login-form">
-            <h2>用户登录</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="email">邮箱：</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">密码：</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                <button type="submit" class="btn-login">登录</button>
-            </form>
-            <p id="loginMessage"></p>
+        <div id="authForms">
+            <div id="loginForm" class="auth-form">
+                <h2>登录</h2>
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <label for="loginEmail">邮箱：</label>
+                        <input type="email" id="loginEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">密码：</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn-login">登录</button>
+                </form>
+                <p>还没有账号？<a href="#" id="showRegister">注册</a></p>
+            </div>
+            <div id="registerForm" class="auth-form" style="display: none;">
+                <h2>注册</h2>
+                <form id="registerFormElement">
+                    <div class="form-group">
+                        <label for="registerEmail">邮箱：</label>
+                        <input type="email" id="registerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">密码：</label>
+                        <input type="password" id="registerPassword" required minlength="8">
+                    </div>
+                    <button type="submit" class="btn-register">注册</button>
+                </form>
+                <p>已有账号？<a href="#" id="showLogin">登录</a></p>
+            </div>
         </div>
+        <div id="userInfo" style="display: none;">
+            <h2>用户信息</h2>
+            <p>邮箱：<span id="userEmail"></span></p>
+            <button id="logoutBtn" class="btn-logout">退出登录</button>
+        </div>
+        <p id="message"></p>
         <button id="backToCalendar" class="btn-back"><i class="fas fa-arrow-left"></i> 返回日历</button>
     </div>
     <script src="settings.js"></script>
