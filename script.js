@@ -34,6 +34,13 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.error('添加课程表按钮未找到');
     }
+
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', openSettings);
+    } else {
+        console.error('设置按钮未找到');
+    }
 });
 
 function initializeCalendar() {
@@ -693,3 +700,10 @@ function isValidDate(date) {
     return date instanceof Date && !isNaN(date);
 }
 
+function openSettings() {
+    // 这里可以添加跳转到设置页面的逻辑
+    // 暂时使用 alert 来模拟
+    alert('设置页面正在开发中，敬请期待！');
+    // 未来可以使用以下代码跳转到设置页面
+    // window.location.href = 'settings.html';
+}
