@@ -4,8 +4,8 @@ const courseSchema = new mongoose.Schema({
     name: String,
     teacher: String,
     day: String,
-    startTime: String,
-    endTime: String,
+    startTime: Date,
+    endTime: Date,
     location: String,
     weeks: [Number],
 });
