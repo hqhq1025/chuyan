@@ -449,7 +449,7 @@ function addEventPrompt(start, end, allDay) {
     };
 }
 
-// 修改 showEventDetails 函数
+// 修�� showEventDetails 函数
 function showEventDetails(event) {
     const modal = document.getElementById('customModal');
     const modalTitle = document.getElementById('modalTitle');

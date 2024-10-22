@@ -324,3 +324,91 @@ h2 {
 .toggle-switch input[type="checkbox"]:checked + label .toggle-slider:before {
     transform: translateX(20px);
 }
+
+/* 日程条详情模态框样式 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明背景 */
+}
+
+.modal-content {
+    background-color: #ffffff; /* 白色背景 */
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 10px; /* 圆角 */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* 柔和的阴影 */
+    width: 80%;
+    max-width: 500px; /* 最大宽度 */
+    max-height: 80vh; /* 最大高度 */
+    overflow-y: auto; /* 允许滚动 */
+}
+
+.modal-title {
+    font-size: 24px; /* 标题字体大小 */
+    font-weight: 600; /* 加粗 */
+    color: #1d1d1f; /* 深色字体 */
+    margin-bottom: 15px; /* 下边距 */
+}
+
+.modal-body {
+    margin-bottom: 20px;
+}
+
+.modal-content p {
+    margin: 10px 0; /* 段落间距 */
+    font-size: 16px; /* 字体大小 */
+    color: #333; /* 深色字体 */
+}
+
+.original-input-container {
+    margin-top: 15px; /* 上边距 */
+}
+
+.toggle-btn {
+    background-color: #0071e3; /* 按钮背景颜色 */
+    color: white; /* 字体颜色 */
+    border: none;
+    border-radius: 5px; /* 圆角 */
+    padding: 10px 15px; /* 内边距 */
+    cursor: pointer;
+    transition: background-color 0.3s; /* 背景颜色过渡 */
+}
+
+.toggle-btn:hover {
+    background-color: #005bbf; /* 悬停时的背景颜色 */
+}
+
+.delete-btn {
+    background-color: #ff4d4f; /* 删除按钮背景颜色 */
+    color: white; /* 字体颜色 */
+    border: none;
+    border-radius: 5px; /* 圆角 */
+    padding: 10px 15px; /* 内边距 */
+    cursor: pointer;
+    transition: background-color 0.3s; /* 背景颜色过渡 */
+}
+
+.delete-btn:hover {
+    background-color: #d12e2e; /* 悬停时的背景颜色 */
+}
+
+/* 响应式设计 */
+@media (max-width: 600px) {
+    .modal-content {
+        width: 90%; /* 在小屏幕上调整宽度 */
+    }
+
+    .modal-title {
+        font-size: 20px; /* 小屏幕上标题字体大小 */
+    }
+
+    .modal-content p {
+        font-size: 14px; /* 小屏幕上段落字体大小 */
+    }
+}
