@@ -136,9 +136,9 @@ async function processInput() {
 
 // 在文件顶部添这个函数
 function getNextOccurrence(dayOfWeek, referenceDate = new Date()) {
-    const daysUntilNext = (dayOfWeek - referenceDate.getDay() + 7) % 7;
+    const daysUntilNext = (dayOfWeek + 7 - referenceDate.getDay()) % 7;
     const nextDate = new Date(referenceDate);
-    nextDate.setDate(referenceDate.getDate() + daysUntilNext);
+    nextDate.setDate(referenceDate.getDate() + (daysUntilNext === 0 ? 7 : daysUntilNext));
     return nextDate;
 }
 
@@ -166,31 +166,32 @@ function parseJsonResponse(jsonResponse, originalInput) {
         jsonResponse.日程.forEach(event => {
             const startDate = parseChineseDateTime(event.开始时间);
             if (startDate) {
+                let recurrenceRule = null;
+                if (event.重复频率 !== '不重复') {
+                    const dayOfWeek = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'].indexOf(event.开始时间.split(' ')[0]);
+                    if (dayOfWeek !== -1) {
+                        const nextOccurrence = getNextOccurrence(dayOfWeek);
+                        startDate.setFullYear(nextOccurrence.getFullYear(), nextOccurrence.getMonth(), nextOccurrence.getDate());
+                    }
+                    recurrenceRule = {
+                        freq: getFrequency(event.重复频率),
+                        interval: 1,
+                        dtstart: startDate
+                    };
+                }
                 schedules.push({
                     title: event.待办事项,
                     start: startDate,
                     end: event.预计时长 !== '未知' ? calculateEndTime(startDate, event.预计时长) : null,
                     allDay: false,
-                    recurrence: event.重复频率,
-                    notes: event.备注,
-                    isReminder: false,
-                    originalInput: originalInput
+                    rrule: recurrenceRule,
+                    extendedProps: {
+                        notes: event.备注,
+                        originalInput: originalInput
+                    }
                 });
             } else {
                 console.error('无效的日期时间:', event.开始时间);
-                // 可以选择添加一个默认的日期时间，或者跳过这个事件
-                // 例如：使用当前时间作为默认值
-                const defaultDate = new Date();
-                schedules.push({
-                    title: event.待办事项,
-                    start: defaultDate,
-                    end: null,
-                    allDay: false,
-                    recurrence: event.重复频率,
-                    notes: event.备注 + ' (时间解析错误)',
-                    isReminder: false,
-                    originalInput: originalInput
-                });
             }
         });
     }
@@ -376,7 +377,7 @@ function addEventToCalendar(taskInfo) {
 
     if (!taskInfo.start) {
         console.error('无效的开始时间:', taskInfo);
-        updateChat(`添加日败：${taskInfo.title} - 无效的开始时间`);
+        updateChat(`添加日程失败：${taskInfo.title} - 无效的开始时间`);
         return;
     }
 
@@ -387,16 +388,12 @@ function addEventToCalendar(taskInfo) {
         allDay: taskInfo.allDay || false,
         extendedProps: {
             notes: taskInfo.notes,
-            originalInput: taskInfo.originalInput,
-            isReminder: taskInfo.isReminder
+            originalInput: taskInfo.originalInput
         }
     };
 
-    if (taskInfo.recurrence && taskInfo.recurrence !== '不重复') {
-        eventData.rrule = {
-            freq: getFrequency(taskInfo.recurrence),
-            dtstart: taskInfo.start
-        };
+    if (taskInfo.rrule) {
+        eventData.rrule = taskInfo.rrule;
     }
 
     console.log('Event data to be added:', eventData);
@@ -406,10 +403,10 @@ function addEventToCalendar(taskInfo) {
         console.log('Event added successfully:', addedEvent);
         calendar.render();
         if (isMemoryModeEnabled) saveEvents();
-        updateChat(`已添加${taskInfo.isReminder ? '提醒' : '日程'}：${taskInfo.title}`);
+        updateChat(`已添加日程：${taskInfo.title}`);
     } catch (error) {
         console.error('Failed to add event:', error);
-        updateChat(`添加${taskInfo.isReminder ? '提醒' : '日程'}失败：${taskInfo.title}`);
+        updateChat(`添加日程失败：${taskInfo.title}`);
     }
 }
 

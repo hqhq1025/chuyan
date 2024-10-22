@@ -97,11 +97,12 @@ async function processUserInput(userInput) {
 2. 日期时间格式必须是"YYYY年MM月DD日 HH:mm"，例如"2024年5月15日 15:30"。请确保使用24小时制表示时间，不要使用"上午"、"下午"等词语。
 3. 如果用户没有明确指定年份，请使用当前年份（${new Date().getFullYear()}年），确保理解"今天"、"明天"等词汇时也使用当前年份。
 4. 如果用户没有明确指定时间，请默认使用当天的09:00。
-5. 对于相对日期（如"明天"、"后天"、"下个月"等），请转换为具体的日期。例如：
+5. 对于相对日期（如"明天"、"后天"、"下个月"、"周五"等），请转换为具体的日期。例如：
    - 如果今天是 ${currentDate}，则"今天"应为 "${currentDate}"。
    - "明天"应为 "${new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}"。
    - "后天"应为 "${new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0]}"。
    - "下个月"应转换为下个月的第一天，例如 "${new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split('T')[0]}"。
+   - 对于"周一"到"周日"，请计算出最近的那个日期。
 6. "今天"或"今日"始终指的是 ${currentDate}，时间默认为09:00。例：用户输入"今天开会"，应理解为"${currentDate} 09:00"。
 7. 预计时长如果未知，请填写"未知"。
 8. 重复频率如果未提及，默认为"不重复"。
@@ -131,7 +132,7 @@ async function processUserInput(userInput) {
      "日程": [
        {
          "待办事项": "参加聚会",
-         "开始时间": "${new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]} 20:00",
+         "开始时间": "${new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0].replace(/-/g, '年').replace('年', '年') + '日'} 20:00",
          "预计时长": "未知",
          "重复频率": "不重复",
          "备注": "无"
@@ -140,13 +141,13 @@ async function processUserInput(userInput) {
      "提醒事项": []
    }
 
-3. 输入：后天早上9点开会
+3. 输入：周五晚上9点参加派对
    输出：
    {
      "日程": [
        {
-         "待办事项": "开会",
-         "开始时间": "${new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0]} 09:00",
+         "待办事项": "参加派对",
+         "开始时间": "${getNextDayOfWeek(5).replace(/-/g, '年').replace('年', '年') + '日'} 21:00",
          "预计时长": "未知",
          "重复频率": "不重复",
          "备注": "无"
@@ -161,7 +162,7 @@ async function processUserInput(userInput) {
      "日程": [
        {
          "待办事项": "开会",
-         "开始时间": "${new Date(new Date().getFullYear(), new Date().getMonth() + 1, 15).toISOString().split('T')[0]} 09:00",
+         "开始时间": "${new Date(new Date().getFullYear(), new Date().getMonth() + 1, 15).toISOString().split('T')[0].replace(/-/g, '年').replace('年', '年') + '日'} 09:00",
          "预计时长": "2小时",
          "重复频率": "不重复",
          "备注": "无"
@@ -176,7 +177,7 @@ async function processUserInput(userInput) {
      "日程": [
        {
          "待办事项": "健身",
-         "开始时间": "${new Date(new Date().setDate(new Date().getDate() + (3 + 7 - new Date().getDay()) % 7)).toISOString().split('T')[0]} 09:00",
+         "开始时间": "${getNextDayOfWeek(3).replace(/-/g, '年').replace('年', '年') + '日'} 09:00",
          "预计时长": "未知",
          "重复频率": "每周",
          "备注": "无"
@@ -190,28 +191,6 @@ async function processUserInput(userInput) {
    {
      "日程": [],
      "提醒事项": ["带文件"]
-   }
-
-7. 输入：每周一和周三去健身房
-   输出：
-   {
-     "日程": [
-       {
-         "待办事项": "去健身房",
-         "开始时间": "${new Date(new Date().setDate(new Date().getDate() + (1 + 7 - new Date().getDay()) % 7)).toISOString().split('T')[0]} 09:00",
-         "预计时长": "未知",
-         "重复频率": "每周",
-         "备注": "无"
-       },
-       {
-         "待办事项": "去健身房",
-         "开始时间": "${new Date(new Date().setDate(new Date().getDate() + (3 + 7 - new Date().getDay()) % 7)).toISOString().split('T')[0]} 09:00",
-         "预计时长": "未知",
-         "重复频率": "每周",
-         "备注": "无"
-       }
-     ],
-     "提醒事项": []
    }
 
 请确保始终遵循这个格式，不要添加任何额外的文本或解释。` },
@@ -261,3 +240,10 @@ if (typeof window !== 'undefined') {
 // 为了调试，添加一个控制台日志
 console.log('aiAssistant.js 已加载，processUserInput 函数已定义');
 
+// 添加这个辅助函数来计算下一个指定星期几的日期
+function getNextDayOfWeek(dayOfWeek) {
+    const today = new Date();
+    const targetDay = new Date(today);
+    targetDay.setDate(today.getDate() + (dayOfWeek + 7 - today.getDay()) % 7);
+    return targetDay.toISOString().split('T')[0];
+}
