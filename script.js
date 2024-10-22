@@ -216,7 +216,7 @@ function parseMarkdownResponse(markdownResponse, originalInput) {
         } else if (line.startsWith('1. 待办事项：')) {
             currentSchedule.title = line.substring('1. 待办事项：'.length).trim();
         } else if (line.startsWith('2. 开始时间：')) {
-            currentSchedule.start = parseChineseDateTime(line.substring('2. 开始时��：'.length).trim());
+            currentSchedule.start = parseChineseDateTime(line.substring('2. 开始时：'.length).trim());
         } else if (line.startsWith('3. 预计时长：')) {
             const durationStr = line.substring('3. 预计时长：'.length).trim();
             if (durationStr !== '未知' && currentSchedule.start) {
@@ -464,28 +464,18 @@ function showEventDetails(event) {
         <p><strong>结束时间:</strong> ${event.end ? event.end.toLocaleString() : '未指定'}</p>
         <p><strong>重复频率:</strong> ${event.rrule ? getRecurrenceText(event.rrule) : '不重复'}</p>
         <p><strong>备注:</strong> ${event.extendedProps.notes || '无'}</p>
-        <div class="original-input-container">
-            <button id="toggleOriginalInput" class="toggle-btn">显示原文</button>
-            <div id="originalInputText" class="original-input-text" style="display: none;">
-                <p>${event.extendedProps.originalInput || '原始输入'}</p>
-            </div>
-        </div>
+        <button id="deleteEventBtn">删除此事件</button>
     `;
 
-    const toggleBtn = modalBody.querySelector('#toggleOriginalInput');
-    const originalInputText = modalBody.querySelector('#originalInputText');
-
-    toggleBtn.addEventListener('click', function() {
-        if (originalInputText.style.display === 'none') {
-            originalInputText.style.display = 'block';
-            toggleBtn.textContent = '隐藏原文';
-            toggleBtn.classList.add('active');
-        } else {
-            originalInputText.style.display = 'none';
-            toggleBtn.textContent = '显示原文';
-            toggleBtn.classList.remove('active');
+    const deleteEventBtn = document.getElementById('deleteEventBtn');
+    deleteEventBtn.onclick = function() {
+        const confirmed = confirm('您确定要删除此事件吗？');
+        if (confirmed) {
+            event.remove(); // 从日历中删除事件
+            updateChat(`已删除事件：${event.title}`);
+            modal.style.display = 'none'; // 关闭模态框
         }
-    });
+    };
 
     modal.style.display = 'block';
 
