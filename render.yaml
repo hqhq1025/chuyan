@@ -2,7 +2,9 @@ services:
   - type: web
     name: schedule-manager-api
     env: node
-    buildCommand: npm install
+    nodeVersion: 16.x
+    rootDir: backend
+    buildCommand: npm ci
     startCommand: npm start
     envVars:
       - key: MONGODB_URI
