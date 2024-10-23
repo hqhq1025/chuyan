@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: schedule-manager-api
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGODB_URI
+        sync: false

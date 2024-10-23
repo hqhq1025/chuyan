@@ -8,8 +8,14 @@ const app = express();
 // 连接到 MongoDB
 connectDB();
 
+// CORS 配置
+app.use(cors({
+  origin: 'https://chuyan.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 // 中间件
-app.use(cors());
 app.use(express.json());
 
 // 路由

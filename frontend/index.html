@@ -21,7 +21,7 @@
                         <span class="toggle-text">记忆模式</span>
                     </label>
                 </div>
-                <button id="settingsBtn" class="settings-btn"><i class="fas fa-cog"></i></button>
+                <button id="settingsBtn" class="settings-btn" aria-label="设置"><i class="fas fa-cog"></i></button>
             </div>
             <div id="calendar"></div>
         </div>
@@ -58,7 +58,8 @@
     <div id="uploadModal" class="modal">
         <div class="modal-content">
             <h2>上传课程表</h2>
-            <input type="file" id="xlsFileInput" accept=".xls,.xlsx">
+            <label for="xlsFileInput">选择课程表文件：</label>
+            <input type="file" id="xlsFileInput" accept=".xls,.xlsx" aria-label="选择课程表文件">
             <div class="modal-buttons">
                 <button id="uploadFileBtn" class="btn-confirm" onclick="uploadCourseSchedule()">上传</button>
                 <button id="cancelUploadBtn" class="btn-cancel">取消</button>
@@ -76,7 +77,7 @@
     <script src="courseSchedule.js"></script>
     <script src="script.js"></script>
     <script>
-        const API_URL = 'https://your-heroku-app-name.herokuapp.com';
+        const API_URL = 'https://chuyan.onrender.com';  // 更新为你的实际 Render URL
 
         async function uploadCourseSchedule() {
             const fileInput = document.getElementById('xlsFileInput');
