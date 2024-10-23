@@ -10,11 +10,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "express": "^4.21.1",
-    "mongoose": "^8.7.2",
+    "express": "^4.17.1",
+    "mongoose": "^6.0.12",
     "cors": "^2.8.5"
   },
   "engines": {
-    "node": "14.x"
+    "node": ">=16.0.0"
   }
 }

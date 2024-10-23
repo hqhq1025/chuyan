@@ -10,7 +10,7 @@ connectDB();
 
 // CORS 配置
 app.use(cors({
-  origin: 'https://chuyan.vercel.app',
+  origin: ['https://chuyan.vercel.app', 'http://localhost:3000'],  // 添加本地开发 URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -21,5 +21,22 @@ app.use(express.json());
 // 路由
 app.use('/api/courses', coursesRoute);
 
+// 错误处理中间件
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// 未捕获的异常处理
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
