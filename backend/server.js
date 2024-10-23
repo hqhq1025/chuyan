@@ -8,6 +8,10 @@ const app = express();
 // 连接到 MongoDB
 connectDB().catch(err => {
     console.error('Failed to connect to MongoDB', err);
+    if (err.name === 'MongoServerError') {
+        console.error('MongoDB Error Code:', err.code);
+        console.error('MongoDB Error Message:', err.errmsg);
+    }
     process.exit(1);
 });
 
@@ -37,7 +41,7 @@ app.get('/test', (req, res) => {
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log('MongoDB URI:', process.env.MONGODB_URI);
+    console.log('MongoDB URI:', process.env.MONGODB_URI.replace(/\/\/.*:.*@/, '//<USERNAME>:<PASSWORD>@')); // 隐藏敏感信息
 });
 
 // 未捕获的异常处理
