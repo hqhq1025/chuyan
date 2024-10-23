@@ -6,9 +6,12 @@ const router = express.Router();
 // 获取所有课程
 router.get('/', async (req, res) => {
     try {
+        console.log('Fetching courses...');
         const courses = await Course.find();
+        console.log(`Found ${courses.length} courses`);
         res.json(courses);
     } catch (error) {
+        console.error('Error fetching courses:', error);
         res.status(500).json({ error: error.message });
     }
 });

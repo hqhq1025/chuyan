@@ -6,7 +6,10 @@ const coursesRoute = require('./api/courses');
 const app = express();
 
 // 连接到 MongoDB
-connectDB();
+connectDB().catch(err => {
+    console.error('Failed to connect to MongoDB', err);
+    process.exit(1);
+});
 
 // CORS 配置
 app.use(cors({
@@ -27,8 +30,15 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 
+app.get('/test', (req, res) => {
+    res.json({ message: 'Server is working' });
+});
+
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log('MongoDB URI:', process.env.MONGODB_URI);
+});
 
 // 未捕获的异常处理
 process.on('uncaughtException', (error) => {
