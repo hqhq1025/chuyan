@@ -1,0 +1,28 @@
+{
+  "name": "chuyan",
+  "version": "1.0.0",
+  "description": "这个网页应用允许用户通过简单的聊天界面和可视化日历来管理他们的日程安排。它集成了AI助手功能，能够智能解析用户的自然语言输入，并支持导入课程表。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/ios": "^6.1.2",
+    "express": "^4.17.1",
+    "sqlite3": "^5.0.2",
+    "sqlite": "^4.0.23",
+    "bcrypt": "^5.0.1",
+    "jsonwebtoken": "^8.5.1",
+    "express-validator": "^6.12.0",
+    "helmet": "^4.6.0",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
