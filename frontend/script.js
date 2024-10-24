@@ -114,6 +114,12 @@ function initializeCalendar() {
                 }
                 return content;
             },
+            datesSet: function(info) {
+                // 在视图变化时调用
+                setTimeout(() => {
+                    scrollToCurrentTime(info.view.type);
+                }, 0);
+            }
         });
         calendar.render();
         console.log('Calendar initialized:', calendar);
@@ -273,7 +279,7 @@ function parseMarkdownResponse(markdownResponse, originalInput) {
             if (durationStr !== '未知' && currentSchedule.start) {
                 currentSchedule.end = calculateEndTime(currentSchedule.start, durationStr);
             }
-        } else if (line.startsWith('4. 重���频率：')) {
+        } else if (line.startsWith('4. 重频率：')) {
             currentSchedule.recurrence = line.substring('4. 重复频率：'.length).trim();
         } else if (line.startsWith('5. 备注：')) {
             currentSchedule.notes = line.substring('5. 备注：'.length).trim();
@@ -657,7 +663,7 @@ function showParseResult(parseResult) {
             calendar.render();
             if (isMemoryModeEnabled) saveEvents();
             hideAllModals();
-            updateChat('课程表已成功添加');
+            updateChat('课程表已成功��加');
         },
         hideAllModals
     );
@@ -904,6 +910,9 @@ function addCustomTimeIndicator() {
     timeLabel.className = 'time-label';
     timeIndicator.appendChild(timeLabel);
 
+    let lastScrollTop = 0;
+    let isUserScrolling = false;
+
     function updateTimeIndicator() {
         const now = new Date();
         const minutes = now.getHours() * 60 + now.getMinutes();
@@ -941,6 +950,11 @@ function addCustomTimeIndicator() {
                         timeIndicator.style.display = 'none';
                     }
                 }
+
+                // 如果用户没有在滚动，则自动滚动到当前时间
+                if (!isUserScrolling) {
+                    scrollToCurrentTime(view.type);
+                }
             }
         } else {
             timeIndicator.style.display = 'none';
@@ -952,7 +966,47 @@ function addCustomTimeIndicator() {
 
     // 在视图变化时更新时间指示器
     calendar.on('viewDidMount', updateTimeIndicator);
+
+    // 监听滚动事件
+    const scrollContainer = document.querySelector('.fc-scroller-liquid-absolute');
+    if (scrollContainer) {
+        scrollContainer.addEventListener('scroll', () => {
+            isUserScrolling = true;
+            clearTimeout(scrollContainer.scrollTimer);
+            scrollContainer.scrollTimer = setTimeout(() => {
+                isUserScrolling = false;
+            }, 1000); // 1秒后重置滚动状态
+        });
+    }
+
     // 在窗口大小改变时更新时间指示器
     window.addEventListener('resize', updateTimeIndicator);
 }
 
+function scrollToCurrentTime(viewType) {
+    if (viewType === 'timeGridWeek' || viewType === 'timeGridDay') {
+        const now = new Date();
+        const minutes = now.getHours() * 60 + now.getMinutes();
+        const scrollContainer = document.querySelector('.fc-scroller-liquid-absolute');
+        
+        if (scrollContainer) {
+            const pixelsPerMinute = scrollContainer.scrollHeight / (24 * 60);
+            const scrollPosition = minutes * pixelsPerMinute;
+            const containerHeight = scrollContainer.clientHeight;
+            
+            scrollContainer.scrollTop = scrollPosition - containerHeight / 2;
+            
+            // 如果是周视图，还需要水平滚动到当前日期
+            if (viewType === 'timeGridWeek') {
+                const dayColumns = document.querySelectorAll('.fc-day');
+                const today = dayColumns[now.getDay()];
+                if (today) {
+                    const horizontalScrollContainer = document.querySelector('.fc-scroller-liquid-absolute');
+                    if (horizontalScrollContainer) {
+                        horizontalScrollContainer.scrollLeft = today.offsetLeft - horizontalScrollContainer.clientWidth / 2 + today.clientWidth / 2;
+                    }
+                }
+            }
+        }
+    }
+}
