@@ -706,3 +706,72 @@ h2 {
     margin-bottom: 20px;
 }
 
+/* 更新字体设置 */
+body, .fc {
+    font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #1d1d1f;
+}
+
+/* 更新日历标题字体 */
+.fc .fc-toolbar-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1d1d1f;
+}
+
+/* 更新日历单元格字体 */
+.fc-daygrid-day-number,
+.fc-col-header-cell-cushion {
+    font-size: 14px;
+    font-weight: 400;
+}
+
+/* 更新事件字体 */
+.fc-event-title,
+.fc-event-time {
+    font-size: 12px;
+    font-weight: 400;
+}
+
+/* 响应式字体大小 */
+@media (max-width: 768px) {
+    body, .fc {
+        font-size: 14px;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 20px;
+    }
+
+    .fc-daygrid-day-number,
+    .fc-col-header-cell-cushion {
+        font-size: 12px;
+    }
+
+    .fc-event-title,
+    .fc-event-time {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    body, .fc {
+        font-size: 13px;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 18px;
+    }
+
+    .fc-daygrid-day-number,
+    .fc-col-header-cell-cushion {
+        font-size: 11px;
+    }
+
+    .fc-event-title,
+    .fc-event-time {
+        font-size: 10px;
+    }
+}
