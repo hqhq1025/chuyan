@@ -94,7 +94,8 @@ function initializeCalendar() {
             },
             eventRemove: function(info) {
                 if (isMemoryModeEnabled) saveEvents();
-            }
+            },
+            handleWindowResize: true,
         });
         calendar.render();
         console.log('Calendar initialized:', calendar);
@@ -425,7 +426,7 @@ function addEventToCalendar(taskInfo) {
         updateChat(`已添加日程：${taskInfo.title}`);
     } catch (error) {
         console.error('Failed to add event:', error);
-        updateChat(`添加日程失败：${taskInfo.title}`);
+        updateChat(`添加日程失��：${taskInfo.title}`);
     }
 }
 
@@ -784,4 +785,30 @@ async function handleLogin(e) {
         alert('登录失败，请稍后重试');
     }
 }
+
+// 在文件末尾添加以下代码
+
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleChatBtn = document.getElementById('toggleChatBtn');
+    const container = document.querySelector('.container');
+    const scheduleDiv = document.querySelector('.schedule');
+
+    toggleChatBtn.addEventListener('click', function() {
+        container.classList.toggle('chat-hidden');
+        
+        // 给浏览器更多时间来应用 CSS 变化
+        setTimeout(() => {
+            if (calendar) {
+                calendar.updateSize();
+            }
+        }, 500);  // 500ms 与新的 CSS 过渡时间相匹配
+    });
+
+    // 监听窗口大小变化
+    window.addEventListener('resize', function() {
+        if (calendar) {
+            calendar.updateSize();
+        }
+    });
+});
 

@@ -12,14 +12,17 @@ body {
 .container {
     display: flex;
     height: 100vh;
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .schedule {
-    flex: 3;
+    flex: 1;  /* 改为 flex: 1，使其能够自动扩展 */
     padding: 20px;
     background-color: #ffffff;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
+    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);  /* 添加过渡效果 */
 }
 
 #calendar {
@@ -135,12 +138,13 @@ body {
 
 /* 保留原有的其他样式 */
 .chat {
-    flex: 1;
+    width: 25%;  /* 给定一个固定的宽度 */
     padding: 20px;
     background-color: #f5f5f7;
     display: flex;
     flex-direction: column;
     border-left: 1px solid #d2d2d7;
+    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .input-samples {
@@ -981,3 +985,138 @@ body, .fc {
         margin-top: 0.2em;
     }
 }
+
+/* 优化顶部布局 */
+.fc .fc-toolbar.fc-header-toolbar {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+.fc-toolbar-chunk {
+    margin-bottom: 10px;
+}
+
+/* 移动端优化 */
+@media screen and (max-width: 768px) {
+    /* 调整顶部布局 */
+    .fc .fc-toolbar.fc-header-toolbar {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .fc-toolbar-chunk {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+
+    /* 调整标题大小 */
+    .fc .fc-toolbar-title {
+        font-size: 1.2em;
+    }
+
+    /* 调整按钮大小和间距 */
+    .fc-button-group {
+        display: flex;
+        justify-content: center;
+    }
+
+    .fc-button {
+        padding: 6px 12px;
+        font-size: 0.9em;
+    }
+
+    /* 调整日历网格 */
+    .fc-daygrid-body {
+        width: 100% !important;
+    }
+
+    .fc-daygrid-day-frame {
+        min-height: 4em;
+        padding: 2px;
+    }
+
+    /* 调整事件显示 */
+    .fc-daygrid-event {
+        font-size: 0.8em;
+        padding: 1px 2px;
+    }
+
+    /* 优化触摸体验 */
+    .fc-daygrid-day-top {
+        padding: 8px 4px;
+    }
+
+    .fc-daygrid-day-number {
+        font-size: 0.9em;
+    }
+}
+
+/* 更小屏幕的额外优化 */
+@media screen and (max-width: 480px) {
+    .fc .fc-toolbar-title {
+        font-size: 1em;
+    }
+
+    .fc-button {
+        padding: 4px 8px;
+        font-size: 0.8em;
+    }
+
+    .fc-daygrid-day-frame {
+        min-height: 3em;
+    }
+}
+
+/* 添加以下样式到文件末尾 */
+
+.toggle-chat-btn {
+    position: absolute;
+    right: 25%;  /* 初始位置在聊天框左侧 */
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #0071e3;
+    color: white;
+    border: none;
+    padding: 10px 5px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.toggle-chat-btn i {
+    transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.chat {
+    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.chat-hidden .chat {
+    transform: translateX(100%);
+    width: 0;  /* 当隐藏时，宽度变为0 */
+    padding: 0;  /* 当隐藏时，内边距变为0 */
+    overflow: hidden;  /* 隐藏溢出内容 */
+}
+
+.chat-hidden .toggle-chat-btn {
+    right: 0;  /* 当聊天隐藏时，按钮移到最右边 */
+}
+
+.chat-hidden .toggle-chat-btn i {
+    transform: rotate(180deg);
+}
+
+/* 调整日历容器的宽度 */
+.schedule {
+    transition: width 0.3s ease;
+    width: 75%;
+}
+
+.chat-hidden .schedule {
+    flex: 1;  /* 当聊天隐藏时，日历占据所有可用空间 */
+    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
