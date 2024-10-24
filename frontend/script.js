@@ -720,3 +720,57 @@ function openSettings() {
     // window.location.href = 'settings.html';
 }
 
+async function handleRegister(e) {
+    e.preventDefault();
+    const username = document.getElementById('registerUsername').value;
+    const password = document.getElementById('registerPassword').value;
+
+    try {
+        const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert(data.message);
+        } else {
+            alert(data.error);
+        }
+    } catch (error) {
+        console.error('注册错误:', error);
+        alert('注册失败，请稍后重试');
+    }
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            localStorage.setItem('token', data.token);
+            alert(data.message);
+            document.getElementById('logoutButton').style.display = 'block';
+            checkLoginStatus();
+        } else {
+            alert(data.error);
+        }
+    } catch (error) {
+        console.error('登录错误:', error);
+        alert('登录失败，请稍后重试');
+    }
+}
