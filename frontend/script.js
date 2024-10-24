@@ -115,7 +115,7 @@ userInput.addEventListener('keypress', (e) => {
     }
 });
 
-// 在文件开头添加以下函数
+// 在件开头添加以下函数
 async function callAI(userInput) {
     if (typeof window.processUserInput === 'undefined') {
         console.error('processUserInput 函数未定义。请确保 aiAssistant.js 文件已正确加载。');
@@ -426,7 +426,7 @@ function addEventToCalendar(taskInfo) {
         updateChat(`已添加日程：${taskInfo.title}`);
     } catch (error) {
         console.error('Failed to add event:', error);
-        updateChat(`添加日程失��：${taskInfo.title}`);
+        updateChat(`添加日程失：${taskInfo.title}`);
     }
 }
 
@@ -792,23 +792,86 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleChatBtn = document.getElementById('toggleChatBtn');
     const container = document.querySelector('.container');
     const scheduleDiv = document.querySelector('.schedule');
+    const calendarEl = document.getElementById('calendar');
 
     toggleChatBtn.addEventListener('click', function() {
         container.classList.toggle('chat-hidden');
         
-        // 给浏览器更多时间来应用 CSS 变化
+        // 给浏览器一点时间来应用 CSS 变化
         setTimeout(() => {
             if (calendar) {
                 calendar.updateSize();
+                
+                // 调整日历的宽高比
+                if (container.classList.contains('chat-hidden')) {
+                    const width = calendarEl.offsetWidth;
+                    calendarEl.style.height = `${width * 0.75}px`; // 设置高度为宽度的 75%
+                } else {
+                    calendarEl.style.height = ''; // 恢复原始高度
+                }
+                
+                calendar.render();
             }
-        }, 500);  // 500ms 与新的 CSS 过渡时间相匹配
+        }, 500);  // 500ms 与 CSS 过渡时间相匹配
     });
 
     // 监听窗口大小变化
     window.addEventListener('resize', function() {
         if (calendar) {
             calendar.updateSize();
+            
+            // 在窗口大小变化时也调整日历的宽高比
+            if (container.classList.contains('chat-hidden')) {
+                const width = calendarEl.offsetWidth;
+                calendarEl.style.height = `${width * 0.75}px`;
+                calendar.render();
+            }
         }
     });
+});
+
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+
+settingsBtn.addEventListener('click', openSettings);
+closeSettingsBtn.addEventListener('click', closeSettings);
+
+function openSettings() {
+    settingsPanel.classList.add('show');
+}
+
+function closeSettings() {
+    settingsPanel.classList.remove('show');
+}
+
+// 点击面板外部关闭设置
+document.addEventListener('click', (e) => {
+    if (settingsPanel.classList.contains('show') && 
+        !settingsPanel.contains(e.target) && 
+        e.target !== settingsBtn) {
+        closeSettings();
+    }
+});
+
+// 更新记忆模式开关的处理
+const memoryModeToggle = document.getElementById('memoryModeToggle');
+memoryModeToggle.addEventListener('change', () => {
+    isMemoryModeEnabled = memoryModeToggle.checked;
+    localStorage.setItem('memoryModeEnabled', isMemoryModeEnabled);
+    if (isMemoryModeEnabled) {
+        saveEvents();
+    } else {
+        localStorage.removeItem('calendarEvents');
+    }
+});
+
+// 在页面加载时初始化记忆模式状态
+document.addEventListener('DOMContentLoaded', () => {
+    const savedMemoryMode = localStorage.getItem('memoryModeEnabled');
+    if (savedMemoryMode !== null) {
+        isMemoryModeEnabled = JSON.parse(savedMemoryMode);
+        memoryModeToggle.checked = isMemoryModeEnabled;
+    }
 });
 

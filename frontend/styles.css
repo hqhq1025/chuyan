@@ -17,16 +17,21 @@ body {
 }
 
 .schedule {
-    flex: 1;  /* 改为 flex: 1，使其能够自动扩展 */
+    flex: 1;
     padding: 20px;
     background-color: #ffffff;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
-    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);  /* 添加过渡效果 */
+    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    display: flex;
+    flex-direction: column;
 }
 
 #calendar {
-    height: calc(100% - 60px);
+    flex: 1;
+    min-height: 600px; /* 设置最小高度 */
+    width: 100%;
+    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 /* FullCalendar 样式覆盖 */
@@ -1096,7 +1101,7 @@ body, .fc {
 
 .chat-hidden .chat {
     transform: translateX(100%);
-    width: 0;  /* 当隐藏时，宽度变为0 */
+    width: 0;  /* 当隐���时，宽度变为0 */
     padding: 0;  /* 当隐藏时，内边距变为0 */
     overflow: hidden;  /* 隐藏溢出内容 */
 }
@@ -1120,3 +1125,107 @@ body, .fc {
     transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
+/* 添加以下样式到文件末尾 */
+
+.settings-panel {
+    position: fixed;
+    top: 0;
+    right: -50vw;
+    width: 50vw;
+    height: 100vh;
+    background-color: #fff;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease-in-out;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.settings-panel.show {
+    transform: translateX(-50vw);
+}
+
+.settings-content {
+    padding: 20px;
+}
+
+.settings-body {
+    margin-bottom: 20px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.btn-cancel {
+    background-color: #e0e0e0;
+    color: #333;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.btn-cancel:hover {
+    background-color: #d0d0d0;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 768px) {
+    .settings-panel {
+        width: 80vw;
+        right: -80vw;
+    }
+
+    .settings-panel.show {
+        transform: translateX(-80vw);
+    }
+}
+
+/* 修改 .schedule 样式 */
+.schedule {
+    flex: 1;
+    padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+/* 修改 #calendar 样式 */
+#calendar {
+    flex: 1;
+    min-height: 600px; /* 设置最小高度 */
+    width: 100%;
+    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* 修改 .chat-hidden .schedule 样式 */
+.chat-hidden .schedule {
+    flex: 1;
+    max-width: 1200px; /* 设置最大宽度 */
+    margin: 0 auto; /* 居中显示 */
+}
+
+/* 添加媒体查询以适应不同屏幕大小 */
+@media screen and (max-width: 1200px) {
+    .chat-hidden .schedule {
+        max-width: 90%;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .chat-hidden .schedule {
+        max-width: 95%;
+    }
+    
+    #calendar {
+        min-height: 500px;
+    }
+}
