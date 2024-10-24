@@ -52,15 +52,18 @@ body {
 }
 
 .fc-daygrid-day-frame {
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    overflow: hidden;
 }
 
 .fc-daygrid-day-frame:hover {
     transform: scale(1.02);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.15);
+    background-color: rgba(255, 255, 255, 1);
 }
 
 .fc-daygrid-day-number,
@@ -71,16 +74,30 @@ body {
 }
 
 .fc-day-today {
-    background-color: #e8f0fe !important;
+    background-color: rgba(232, 240, 254, 0.9) !important;
+}
+
+.fc-day-today .fc-daygrid-day-frame:hover {
+    background-color: rgba(232, 240, 254, 1) !important;
 }
 
 .fc-daygrid-event {
-    background-color: #34c759;
-    border-color: #34c759;
+    background-color: rgba(52, 199, 89, 0.9);
+    border-color: rgba(52, 199, 89, 0.9);
     color: #ffffff;
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 2px 4px;
     font-size: 12px;
+    transition: all 0.3s ease;
+    margin-bottom: 2px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.fc-daygrid-event:hover {
+    background-color: rgba(52, 199, 89, 1);
+    border-color: rgba(52, 199, 89, 1);
+    transform: translateY(-1px);
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* 假日和特殊事件的视觉指示器 */
@@ -773,5 +790,194 @@ body, .fc {
     .fc-event-title,
     .fc-event-time {
         font-size: 10px;
+    }
+}
+
+/* 更新日历网格的背景颜色 */
+.fc .fc-view-harness {
+    background-color: rgba(240, 240, 245, 0.8);
+}
+
+/* 更新日期单元格的样式 */
+.fc-daygrid-day-frame {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.fc-daygrid-day-frame:hover {
+    transform: scale(1.02);
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.15);
+    background-color: rgba(255, 255, 255, 1);
+}
+
+/* 更新日历头部单元格样式 */
+.fc-col-header-cell {
+    background-color: rgba(240, 240, 245, 0.8);
+    border-radius: 10px 10px 0 0;
+    border: 1px solid #e0e0e0;
+    border-bottom: none;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 更新今天的样式 */
+.fc-day-today .fc-daygrid-day-frame {
+    background-color: rgba(232, 240, 254, 0.9) !important;
+    border-color: #a0c2ff;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.12);
+}
+
+.fc-day-today .fc-daygrid-day-frame:hover {
+    background-color: rgba(232, 240, 254, 1) !important;
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.18);
+}
+
+/* 更新事件样式 */
+.fc-daygrid-event {
+    background-color: rgba(52, 199, 89, 0.9);
+    border-color: rgba(52, 199, 89, 0.9);
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 2px 4px;
+    font-size: 12px;
+    transition: all 0.3s ease;
+    margin-bottom: 2px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.fc-daygrid-event:hover {
+    background-color: rgba(52, 199, 89, 1);
+    border-color: rgba(52, 199, 89, 1);
+    transform: translateY(-1px);
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* 调整日期数字的位置 */
+.fc-daygrid-day-top {
+    padding: 5px;
+}
+
+.fc-daygrid-day-number {
+    font-weight: 500;
+    color: #333;
+}
+
+/* 确保日历视图的边缘也是圆角的 */
+.fc-view-harness {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* 在文件末尾添加以下样式 */
+
+/* 基础响应式设计 */
+@media screen and (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .schedule, .chat {
+        width: 100%;
+    }
+
+    #calendar {
+        height: 500px;
+    }
+
+    .fc .fc-toolbar {
+        flex-direction: column;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 1.2em;
+        margin-bottom: 10px;
+    }
+
+    .fc .fc-button {
+        font-size: 0.9em;
+        padding: 0.3em 0.6em;
+    }
+
+    .fc-daygrid-day-number,
+    .fc-col-header-cell-cushion {
+        font-size: 0.9em;
+    }
+
+    .fc-event-title,
+    .fc-event-time {
+        font-size: 0.8em;
+    }
+}
+
+/* 小屏幕设备 */
+@media screen and (max-width: 480px) {
+    .fc .fc-toolbar-title {
+        font-size: 1em;
+    }
+
+    .fc .fc-button {
+        font-size: 0.8em;
+        padding: 0.2em 0.4em;
+    }
+
+    .fc-daygrid-day-number,
+    .fc-col-header-cell-cushion {
+        font-size: 0.8em;
+    }
+
+    .fc-event-title,
+    .fc-event-time {
+        font-size: 0.7em;
+    }
+
+    .fc-daygrid-day-frame {
+        padding: 2px;
+    }
+}
+
+/* 确保日历网格在小屏幕上也能正确显示 */
+@media screen and (max-width: 600px) {
+    .fc-daygrid-body {
+        width: 100% !important;
+    }
+
+    .fc-daygrid-day-frame {
+        min-height: 5em;
+    }
+
+    .fc .fc-daygrid-day-top {
+        flex-direction: row;
+        justify-content: center;
+    }
+}
+
+/* 调整日历头部在小屏幕上的布局 */
+@media screen and (max-width: 768px) {
+    .fc .fc-toolbar.fc-header-toolbar {
+        margin-bottom: 0.5em;
+    }
+
+    .fc-header-toolbar .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 0.5em;
+    }
+
+    .fc-header-toolbar .fc-toolbar-chunk:last-child {
+        margin-bottom: 0;
+    }
+}
+
+/* 优化触摸设备上的交互 */
+@media (hover: none) and (pointer: coarse) {
+    .fc-event-main {
+        padding: 0.5em;
+    }
+
+    .fc-daygrid-event {
+        margin-top: 0.2em;
     }
 }
