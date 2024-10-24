@@ -57,40 +57,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initializeCalendar() {
     const calendarEl = document.getElementById('calendar');
-    calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        editable: true,
-        selectable: true,
-        select: function(info) {
-            addEventPrompt(info.start, info.end, info.allDay);
-        },
-        eventClick: function(info) {
-            showEventDetails(info.event);
-        },
-        events: [], // 初始化一个事件数
-        displayEventTime: true, // 显示事件时间
-        eventTimeFormat: { // 自定义时间格式
-            hour: 'numeric',
-            minute: '2-digit',
-            meridiem: 'short'
-        },
-        eventAdd: function(info) {
-            if (isMemoryModeEnabled) saveEvents();
-        },
-        eventChange: function(info) {
-            if (isMemoryModeEnabled) saveEvents();
-        },
-        eventRemove: function(info) {
-            if (isMemoryModeEnabled) saveEvents();
-        }
-    });
-    calendar.render();
-    console.log('Calendar initialized:', calendar);
+    if (calendarEl) {
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            views: {
+                dayGridMonth: { buttonText: '月' },
+                timeGridWeek: { buttonText: '周' },
+                timeGridDay: { buttonText: '日' }
+            },
+            locale: 'zh-cn',
+            editable: true,
+            selectable: true,
+            select: function(info) {
+                addEventPrompt(info.start, info.end, info.allDay);
+            },
+            eventClick: function(info) {
+                showEventDetails(info.event);
+            },
+            events: [],
+            displayEventTime: true,
+            eventTimeFormat: {
+                hour: 'numeric',
+                minute: '2-digit',
+                meridiem: 'short'
+            },
+            eventAdd: function(info) {
+                if (isMemoryModeEnabled) saveEvents();
+            },
+            eventChange: function(info) {
+                if (isMemoryModeEnabled) saveEvents();
+            },
+            eventRemove: function(info) {
+                if (isMemoryModeEnabled) saveEvents();
+            }
+        });
+        calendar.render();
+        console.log('Calendar initialized:', calendar);
+    } else {
+        console.error('Calendar element not found');
+    }
 }
 
 const userInput = document.getElementById('userInput');
@@ -774,3 +784,4 @@ async function handleLogin(e) {
         alert('登录失败，请稍后重试');
     }
 }
+

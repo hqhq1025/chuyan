@@ -61,7 +61,7 @@
             <label for="xlsFileInput">选择课程表文件：</label>
             <input type="file" id="xlsFileInput" accept=".xls,.xlsx" aria-label="选择课程表文件" title="选择要上传的课程表文件">
             <div class="modal-buttons">
-                <button id="uploadFileBtn" class="btn-confirm" onclick="uploadCourseSchedule()">上传</button>
+                <button id="uploadFileBtn" class="btn-confirm">上传</button>
                 <button id="cancelUploadBtn" class="btn-cancel">取消</button>
             </div>
         </div>
@@ -76,70 +76,5 @@
     <script src="aiAssistant.js"></script>
     <script src="courseSchedule.js"></script>
     <script src="script.js"></script>
-    <script>
-        const API_URL = 'https://chuyan.onrender.com';  // 更新为你的实际 Render URL
-
-        async function uploadCourseSchedule() {
-            const fileInput = document.getElementById('xlsFileInput');
-            const file = fileInput.files[0];
-            if (!file) {
-                alert('请选择一个文件');
-                return;
-            }
-
-            try {
-                const jsonData = await parseXLSFile(file);
-                const response = await fetch(`${API_URL}/api/courses`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(jsonData)
-                });
-
-                if (!response.ok) {
-                    throw new Error('上传失败');
-                }
-
-                alert('上传成功');
-                fetchCourses(); // 上传成功后获取最新的课程数据
-            } catch (error) {
-                console.error('Error uploading course schedule:', error);
-                alert('上传失败');
-            }
-        }
-
-        async function fetchCourses() {
-            try {
-                const response = await fetch(`${API_URL}/api/courses`);
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-                }
-                const courses = await response.json();
-                renderCourses(courses);
-            } catch (error) {
-                console.error('Error fetching courses:', error);
-                alert(`获取课程数据失败: ${error.message}`);
-            }
-        }
-
-        function renderCourses(courses) {
-            const calendarEl = document.getElementById('calendar');
-            // 假设你使用 FullCalendar 来渲染课程数据
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                events: courses.map(course => ({
-                    title: course.name,
-                    start: course.startTime,
-                    end: course.endTime,
-                    description: course.location
-                }))
-            });
-            calendar.render();
-        }
-
-        document.addEventListener('DOMContentLoaded', fetchCourses);
-    </script>
 </body>
 </html>
