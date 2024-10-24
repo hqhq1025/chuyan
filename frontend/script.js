@@ -96,9 +96,30 @@ function initializeCalendar() {
                 if (isMemoryModeEnabled) saveEvents();
             },
             handleWindowResize: true,
+            nowIndicator: true, // 启用内置的当前时间指示器
+            eventDidMount: function(info) {
+                // 处理多日事件
+                if (info.event.end) {
+                    const days = Math.ceil((info.event.end - info.event.start) / (1000 * 60 * 60 * 24));
+                    if (days > 1) {
+                        info.el.style.gridColumn = `span ${days}`;
+                        info.el.style.width = '100%';
+                    }
+                }
+            },
+            eventContent: function(arg) {
+                let content = arg.event.title;
+                if (arg.event.allDay) {
+                    return { html: `<div class="fc-event-main-frame"><div class="fc-event-title-container"><div class="fc-event-title fc-sticky">${content}</div></div></div>` };
+                }
+                return content;
+            },
         });
         calendar.render();
         console.log('Calendar initialized:', calendar);
+
+        // 添加自定义时间指示条
+        addCustomTimeIndicator();
     } else {
         console.error('Calendar element not found');
     }
@@ -158,7 +179,7 @@ async function processInput() {
             }
         } catch (error) {
             console.error('处理输入时出错:', error);
-            updateChat(`处理输入出错: ${error.message}。请尝试重新输入或联系管理员。`);
+            updateChat(`处输入出错: ${error.message}。请尝试重新输入或联系管理员。`);
         }
         userInput.value = '';
     }
@@ -175,7 +196,7 @@ function getNextOccurrence(dayOfWeek, referenceDate = new Date()) {
 // 确保 parseAIResponse 函数正确实现
 function parseAIResponse(aiResponse, originalInput) {
     try {
-        // 移除可能存在的 Markdown 代码块标记
+        // 移除可能存的 Markdown 代码块标记
         let cleanResponse = aiResponse.replace(/```json\n?/, '').replace(/```\n?$/, '');
         
         // 尝试解析为JSON
@@ -252,7 +273,7 @@ function parseMarkdownResponse(markdownResponse, originalInput) {
             if (durationStr !== '未知' && currentSchedule.start) {
                 currentSchedule.end = calculateEndTime(currentSchedule.start, durationStr);
             }
-        } else if (line.startsWith('4. 重复频率：')) {
+        } else if (line.startsWith('4. 重���频率：')) {
             currentSchedule.recurrence = line.substring('4. 重复频率：'.length).trim();
         } else if (line.startsWith('5. 备注：')) {
             currentSchedule.notes = line.substring('5. 备注：'.length).trim();
@@ -533,7 +554,7 @@ function showEventDetails(event) {
 
     if (deleteEventBtn) {
         deleteEventBtn.onclick = function() {
-            const confirmed = confirm('您确定要除此事件吗？');
+            const confirmed = confirm('确定要除此事件吗？');
             if (confirmed) {
                 event.remove();
                 updateChat(`已删除事件：${event.title}`);
@@ -782,7 +803,7 @@ async function handleLogin(e) {
         }
     } catch (error) {
         console.error('登录错误:', error);
-        alert('登录失败，请稍后重试');
+        alert('登录失，请稍后重');
     }
 }
 
@@ -874,4 +895,64 @@ document.addEventListener('DOMContentLoaded', () => {
         memoryModeToggle.checked = isMemoryModeEnabled;
     }
 });
+
+// 添加以下新函数
+function addCustomTimeIndicator() {
+    const timeIndicator = document.createElement('div');
+    timeIndicator.className = 'custom-time-indicator';
+    const timeLabel = document.createElement('span');
+    timeLabel.className = 'time-label';
+    timeIndicator.appendChild(timeLabel);
+
+    function updateTimeIndicator() {
+        const now = new Date();
+        const minutes = now.getHours() * 60 + now.getMinutes();
+        const totalMinutes = 24 * 60;
+        const percentage = (minutes / totalMinutes) * 100;
+
+        const view = calendar.view;
+        const isTimeGridView = view.type === 'timeGridDay' || view.type === 'timeGridWeek';
+
+        if (isTimeGridView) {
+            const timeGridContainer = document.querySelector('.fc-timegrid-body');
+            if (timeGridContainer) {
+                if (!timeGridContainer.contains(timeIndicator)) {
+                    timeGridContainer.appendChild(timeIndicator);
+                }
+
+                timeIndicator.style.display = 'block';
+                timeIndicator.style.top = `${percentage}%`;
+                timeIndicator.style.left = '0';
+                timeIndicator.style.width = '100%';
+
+                // 更新时间标签
+                const formattedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                timeLabel.textContent = formattedTime;
+
+                // 在周视图中，只在当天显示时间指示器
+                if (view.type === 'timeGridWeek') {
+                    const todayColumn = document.querySelector('.fc-day-today');
+                    if (todayColumn) {
+                        const columnWidth = todayColumn.offsetWidth;
+                        const leftOffset = todayColumn.offsetLeft;
+                        timeIndicator.style.width = `${columnWidth}px`;
+                        timeIndicator.style.left = `${leftOffset}px`;
+                    } else {
+                        timeIndicator.style.display = 'none';
+                    }
+                }
+            }
+        } else {
+            timeIndicator.style.display = 'none';
+        }
+    }
+
+    updateTimeIndicator(); // 初始更新
+    setInterval(updateTimeIndicator, 60000); // 每分钟更新一次
+
+    // 在视图变化时更新时间指示器
+    calendar.on('viewDidMount', updateTimeIndicator);
+    // 在窗口大小改变时更新时间指示器
+    window.addEventListener('resize', updateTimeIndicator);
+}
 

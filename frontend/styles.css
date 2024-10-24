@@ -1101,7 +1101,7 @@ body, .fc {
 
 .chat-hidden .chat {
     transform: translateX(100%);
-    width: 0;  /* 当隐���时，宽度变为0 */
+    width: 0;  /* 当隐时，宽度变为0 */
     padding: 0;  /* 当隐藏时，内边距变为0 */
     overflow: hidden;  /* 隐藏溢出内容 */
 }
@@ -1229,3 +1229,128 @@ body, .fc {
         min-height: 500px;
     }
 }
+
+/* 添加以下样式到文件末尾 */
+
+.custom-time-indicator {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 0;
+    border-top: 2px solid red;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.time-label {
+    position: absolute;
+    left: 0;
+    top: -10px;
+    background-color: red;
+    color: white;
+    padding: 2px 4px;
+    font-size: 12px;
+    border-radius: 3px;
+}
+
+.fc-timegrid-body {
+    position: relative;
+}
+
+.fc-timegrid-col-events {
+    z-index: 2;
+}
+
+.fc-timegrid-now-indicator-line {
+    z-index: 3;
+}
+
+/* 多日事件样式 */
+.fc-event {
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.fc-event-main {
+    padding: 2px 5px;
+}
+
+.fc-v-event {
+    border: none;
+    background-color: rgba(52, 199, 89, 0.9);
+}
+
+.fc-timegrid-event {
+    border-radius: 5px 5px 0 0;
+}
+
+/* 确保多日事件在周视图中正确显示 */
+.fc-timegrid-event-harness {
+    top: 0 !important;
+    height: 100% !important;
+}
+
+.fc-timegrid-event {
+    height: 100% !important;
+}
+
+/* 调整全天事件的样式 */
+.fc-daygrid-event {
+    white-space: normal;
+    align-items: normal;
+    font-size: 0.9em;
+    line-height: 1.3;
+}
+
+.fc-daygrid-block-event .fc-event-time {
+    font-weight: bold;
+}
+
+.fc-daygrid-block-event .fc-event-title {
+    font-weight: normal;
+}
+
+/* 确保事件内容在多日事件中正确显示 */
+.fc-event-main-frame {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.fc-event-title-container {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+
+.fc-event-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.custom-time-indicator {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: red;
+    z-index: 1000;
+    pointer-events: none;
+    transition: top 0.5s ease-out;
+}
+
+.fc-timegrid-cols {
+    position: relative;
+}
+
+.fc-timegrid-col-events {
+    z-index: 2;
+}
+
+/* 确保时间指示条在周视图中正确显示 */
+.fc-timegrid-now-indicator-line {
+    z-index: 3;
+}
+
